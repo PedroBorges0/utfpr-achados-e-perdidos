@@ -1,34 +1,33 @@
-# Sistema de Cadastro/Login de Usuários
+# Achados e Perdidos Online
 
-Este projeto tem como objetivo desenvolver uma aplicação web com sistema de autenticação de usuários (cadastro e login).  
-O processo começou pelo design no Figma, seguido pela definição da stack tecnológica (frontend, backend e banco de dados) e desenvolvimento colaborativo.  
+Este projeto tem como objetivo desenvolver uma aplicação web para gerenciamento de itens **perdidos e encontrados**, permitindo que usuários cadastrem objetos, realizem buscas e se conectem para recuperar seus pertences.  
 
-A organização das tarefas é feita via GitHub Projects, para garantir clareza e acompanhamento do progresso da equipe.  
+O sistema é colaborativo, oferecendo uma interface intuitiva para cadastro, login e gerenciamento de itens, com foco em acessibilidade e praticidade.  
 
 ---
 
-## Sobre o Projeto
-A aplicação terá como funcionalidades principais:  
-- Tela de login de usuários (email + senha)  
-- Tela de cadastro de novos usuários (nome, email, senha, confirmação de senha)  
-- Recuperação de senha ("esqueci minha senha")  
-- Estrutura responsiva (desktop e mobile)  
-- Integração futura com banco de dados para persistência de usuários  
+## Funcionalidades
+- Cadastro e login de usuários  
+- Cadastro de itens perdidos ou encontrados (com descrição, foto, data, local)  
+- Busca e filtragem de itens cadastrados  
+- Atualização de status do item (encontrado/devolvido)  
+- Interface responsiva (desktop)  
+- Sistema seguro de autenticação  
 
 ---
 
 ## Protótipo no Figma
 As telas do projeto estão sendo desenhadas no Figma.  
-Futuro Link será exibido aqui: ()
+Um futuro link será exibido aqui.  
 
 ---
 
 ## Stack Tecnológica
-A stack foi definida considerando escalabilidade, facilidade de aprendizado e suporte da comunidade:  
+A stack foi definida considerando escalabilidade, suporte da comunidade e facilidade de manutenção:  
 
 - **Frontend:** Next.js  
-- **Backend:** Node.js (Express),
-- **Banco de Dados:** PostgreSQL
+- **Backend:** Node.js (Express)
+- **Banco de Dados:** PostgreSQL  
 - **Design:** Figma  
 - **Containerização:** Docker  
 
@@ -38,11 +37,11 @@ A stack foi definida considerando escalabilidade, facilidade de aprendizado e su
 
 ### Pré-requisitos
 - [Node.js](https://nodejs.org/) v18+  
-- [PostgreSQL](https://www.postgresql.org/) ou [MongoDB](https://www.mongodb.com/)  
+- [PostgreSQL](https://www.postgresql.org/)
 - [Git](https://git-scm.com/)  
 - [Docker](https://www.docker.com/)  
 
-### Passos
+### Passos para rodar localmente
 
 ```bash
 # Clone o repositório
