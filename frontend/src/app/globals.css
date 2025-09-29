@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FFC107;
+  --foreground: #171717;
+  --form-background: #FFFAE6;
+}
+
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+}
+
+input::placeholder {
+  color: #6b7280;
+}
+
+input {
+  color: #171717;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.radio-label-text {
+  color: #171717;
+}
+
+.main-title {
+  color: #000000;
+}
