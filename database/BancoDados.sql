@@ -138,6 +138,7 @@ DECLARE
 BEGIN
   IF TG_OP = 'INSERT' THEN
     acao_texto := 'cadastrou';
+    
   ELSIF TG_OP = 'UPDATE' THEN
     IF NEW.data_claim IS NOT NULL AND OLD.data_claim IS NULL THEN
       acao_texto := 'reivindicou';
