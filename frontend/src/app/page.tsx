@@ -1,54 +1,135 @@
-import type { Metadata } from 'next';
+// Vitrine.tsx
+"use client";
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import ItemCard from "@/components/ItemCard";
+import api from "@/services/api"; 
+import ItemCard from "@/components/ItemCard"; 
+import { useRouter } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: "UTFPR - Lista de Itens",
-};
-
-const mockItens = [
-  { id: 1, nome: "Caneta Tinteiro", imagem: "/caneta.png", status: "Achado", descricao: "Caneta preta com detalhes dourados.", local: "Biblioteca", data: "28/09/2025", horario: "15:30" },
-  { id: 2, nome: "Guarda-chuva", imagem: "/guarda-chuva.png", status: "Perdido", descricao: "Guarda-chuva roxo, pequeno.", local: "Bloco B", data: "27/09/2025", horario: "10:00" },
-  { id: 3, nome: "Boné Azul", imagem: "/bone.png", status: "Achado", descricao: "Boné de beisebol, azul claro.", local: "Cantina", data: "29/09/2025", horario: "12:45" },
-  { id: 4, nome: "Óculos de Grau", imagem: "/oculos.png", status: "Perdido", descricao: "Armação preta, modelo retangular.", local: "Estacionamento", data: "26/09/2025", horario: "18:00" },
-  { id: 5, nome: "Caneta Tinteiro", imagem: "/caneta.png", status: "Achado", descricao: "Caneta preta com detalhes dourados.", local: "Biblioteca", data: "28/09/2025", horario: "15:30" },
-  { id: 6, nome: "Guarda-chuva", imagem: "/guarda-chuva.png", status: "Perdido", descricao: "Guarda-chuva roxo, pequeno.", local: "Bloco B", data: "27/09/2025", horario: "10:00" },
-  { id: 7, nome: "Boné Azul", imagem: "/bone.png", status: "Achado", descricao: "Boné de beisebol, azul claro.", local: "Cantina", data: "29/09/2025", horario: "12:45" },
-  { id: 8, nome: "Óculos de Grau", imagem: "/oculos.png", status: "Perdido", descricao: "Armação preta, modelo retangular.", local: "Estacionamento", data: "26/09/2025", horario: "18:00" },
-] as const;
+// Definindo o tipo para os dados da API (Baseado na rota GET /api/itens)
+interface ItemAPI {
+    id_item: number;
+    titulo: string;
+    descricao: string;
+    data_encontrado: string;
+    LocalEncontrado: { nome: string };
+    StatusAtual: { descricao: string };
+    // Adicione mais campos conforme necessário
+}
 
 export default function Vitrine() {
-  return (
-    <main className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--background)' }}>
-      
-      <div 
-        className="w-full max-w-7xl p-10 rounded-2xl border-4 border-gray-700 shadow-2xl"
-        style={{ backgroundColor: 'var(--form-background)' }}
-      >
-        <header className="flex flex-col items-center mb-8">
-          <Image src="/utfpr-logo.png" alt="Logo UTFPR" width={220} height={220} className="mb-4" />
-          <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md">
-            ACHADOS E PERDIDOS
-          </h1>
-        </header>
+    const router = useRouter();
+    const [items, setItems] = useState<ItemAPI[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userName, setUserName] = useState('');
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {mockItens.map(item => (
-            <ItemCard key={item.id} item={item} />
-          ))}
-        </div>
-      </div>
-      
-      <div className="fixed bottom-8 right-8">
-        {/* ESTILO DO BOTÃO ALTERADO AQUI */}
-        <Link 
-          href="/cadastro" 
-          className="bg-yellow-400 text-yellow-900 font-bold text-lg px-6 py-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors"
-        >
-          Cadastrar um item
-        </Link>
-      </div>
-    </main>
-  );
+    // --- 1. FUNÇÃO PARA BUSCAR ITENS E VERIFICAR AUTENTICAÇÃO ---
+    useEffect(() => {
+        // Verifica a sessão do usuário no localStorage
+        const token = localStorage.getItem('authToken');
+        const userJson = localStorage.getItem('user');
+
+        if (token && userJson) {
+            try {
+                const user = JSON.parse(userJson);
+                setIsAuthenticated(true);
+                setUserName(user.nome.split(' ')[0]);
+            } catch (e) {
+                localStorage.clear();
+            }
+        }
+        
+        const fetchItems = async () => {
+            try {
+                // Rota pública GET /api/itens
+                const response = await api.get('/itens');
+                setItems(response.data);
+            } catch (err: any) {
+                setError("Erro ao carregar itens: " + (err.message || "Verifique se o backend está rodando na porta 3001."));
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchItems();
+    }, []);
+
+    // --- FUNÇÃO DE LOGOUT ---
+    const handleLogout = () => {
+        localStorage.clear();
+        setIsAuthenticated(false);
+        setUserName('');
+        router.push('/login');
+    };
+
+    const renderContent = () => {
+        if (isLoading) {
+            return <p className="text-center text-xl font-semibold">Carregando itens do banco de dados...</p>;
+        }
+
+        if (error) {
+            return <p className="text-center text-xl font-semibold text-red-500">Erro: {error}</p>;
+        }
+        
+        if (items.length === 0) {
+            return <p className="text-center text-xl font-semibold text-gray-600">Nenhum item cadastrado no sistema.</p>;
+        }
+
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {items.map(item => (
+                    <ItemCard key={item.id_item} item={item} />
+                ))}
+            </div>
+        );
+    };
+
+    return (
+        <main className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--background)' }}>
+            <div 
+                className="w-full max-w-7xl p-10 rounded-2xl border-4 border-gray-700 shadow-2xl"
+                style={{ backgroundColor: 'var(--form-background)' }}
+            >
+                <header className="flex items-center justify-between w-full mb-12">
+                    <Image src="/utfpr-logo.png" alt="Logo UTFPR" width={200} height={200} />
+                    <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md">
+                        ACHADOS E PERDIDOS
+                    </h1>
+                    
+                    {/* BOTÃO CONDICIONAL: LOGOUT ou LOGIN */}
+                    {isAuthenticated ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-lg font-semibold text-gray-700">Olá, {userName}!</span>
+                            <button 
+                                onClick={handleLogout}
+                                className="bg-red-600 text-white font-bold text-md px-6 py-3 rounded-full shadow-lg hover:bg-red-700 transition-colors"
+                            >
+                                Sair
+                            </button>
+                        </div>
+                    ) : (
+                        <Link href="/login" className="bg-gray-800 text-white font-bold text-md px-8 py-3 rounded-full shadow-lg hover:bg-black transition-colors">
+                            Login
+                        </Link>
+                    )}
+                </header>
+                
+                {renderContent()}
+            </div>
+            
+            {/* BOTÃO DE CADASTRO DE ITEM (FLUTUANTE) */}
+            <div className="fixed bottom-8 right-8">
+                <Link 
+                    // Link corrigido para a pasta que você criou
+                    href={isAuthenticated ? "/cadastro" : "/login"} 
+                    className="bg-yellow-400 text-yellow-900 font-bold text-lg px-6 py-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors"
+                >
+                    Cadastrar um item
+                </Link>
+            </div>
+        </main>
+    );
 }
