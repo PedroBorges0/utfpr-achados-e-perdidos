@@ -15,7 +15,7 @@ interface ItemAPI {
     data_encontrado: string;
     LocalEncontrado: { nome: string };
     StatusAtual: { descricao: string };
-    // Adicione mais campos conforme necessário
+    imagem?: string; // Propriedade opcional, agora corrigida
 }
 
 export default function Vitrine() {
@@ -81,7 +81,10 @@ export default function Vitrine() {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 {items.map(item => (
-                    <ItemCard key={item.id_item} item={item} />
+                    <ItemCard 
+                        key={item.id_item} 
+                        item={{ ...item, imagem: item.imagem || "/images/default.png" }} 
+                    />
                 ))}
             </div>
         );
@@ -123,7 +126,6 @@ export default function Vitrine() {
             {/* BOTÃO DE CADASTRO DE ITEM (FLUTUANTE) */}
             <div className="fixed bottom-8 right-8">
                 <Link 
-                    // Link corrigido para a pasta que você criou
                     href={isAuthenticated ? "/cadastro" : "/login"} 
                     className="bg-yellow-400 text-yellow-900 font-bold text-lg px-6 py-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors"
                 >

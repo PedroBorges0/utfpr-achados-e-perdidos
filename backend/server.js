@@ -4,7 +4,7 @@ require('dotenv').config(); // Carrega as variáveis de ambiente
 const express = require('express');
 const cors = require('cors'); // Middleware CORS
 const usuarioRoutes = require('./routes/usuarioRoutes');
-const itemRoutes = require('./routes/itemRoutes'); 
+const itemRoutes = require('./routes/itemroutes'); 
 const categoriaRoutes = require('./routes/categoriaRoutes'); // <--- NOVO: Importar categorias
 const localizacaoRoutes = require('./routes/localizacaoRoutes'); // <--- NOVO: Importar localizações
 

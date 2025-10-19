@@ -2,24 +2,32 @@ version: "3.9"
 
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: frontend
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:4000
+      - NODE_ENV=production
     depends_on:
       - backend
+    restart: unless-stopped
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: backend
     ports:
       - "4000:4000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/appdb
+      - NODE_ENV=production
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
     image: postgres:15
