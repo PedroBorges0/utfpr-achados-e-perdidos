@@ -1,7 +1,6 @@
-// backend/models/Item.js
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/database');
+
 const Usuario = require('./Usuario');
 const Categoria = require('./Categoria');
 const Localizacao = require('./Localizacao');
@@ -35,7 +34,7 @@ const Item = sequelize.define('Item', {
     id_status: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 1, 
+        defaultValue: 1,
     },
     id_usuario_cadastrou: {
         type: DataTypes.INTEGER,
@@ -57,21 +56,21 @@ const Item = sequelize.define('Item', {
     },
     imagem: {
         type: DataTypes.STRING(255),
-    }
+    },
 }, {
     tableName: 'itens',
     timestamps: false,
     freezeTableName: true,
 });
 
-// --- DEFINIÇÃO DAS ASSOCIAÇÕES (Obrigatório para as Rotas GET) ---
-// O erro de sincronização foi resolvido pela remoção do 'references' dos campos.
-// Este bloco deve estar ATIVO.
-
+// ============================
+// ASSOCIAÇÕES
+// ============================
 Item.belongsTo(Categoria, { foreignKey: 'id_categoria', as: 'Categoria' });
 Item.belongsTo(Localizacao, { foreignKey: 'id_localizacao_encontrado', as: 'LocalEncontrado' });
 Item.belongsTo(StatusItem, { foreignKey: 'id_status', as: 'StatusAtual' });
 Item.belongsTo(Usuario, { foreignKey: 'id_usuario_cadastrou', as: 'CadastradoPor' });
 Item.belongsTo(Usuario, { foreignKey: 'id_usuario_claim', as: 'ReivindicadoPor' });
 
+// Exporta o modelo
 module.exports = Item;

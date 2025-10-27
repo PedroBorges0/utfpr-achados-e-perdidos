@@ -1,14 +1,20 @@
+// backend/db/database.js
 const { Sequelize } = require('sequelize');
+require('dotenv').config(); // carrega variáveis do .env
 
-const sequelize = new Sequelize('achados_e_perdidos', 'postgres', '112359aA@', {
-  host: 'localhost',
-  dialect: 'postgres',
-  dialectOptions: {
-    ssl: false, // Pode ser necessário dependendo da sua configuração
-    sslmode: 'disable',
-    authMethod: 'password',
-  },
-  logging: false, // Desativa o log de consultas SQL para um console mais limpo
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASS,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+      ssl: false,
+    },
+  }
+);
 
 module.exports = sequelize;

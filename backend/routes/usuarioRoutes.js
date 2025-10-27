@@ -1,104 +1,92 @@
-// backend/routes/usuarioRoutes.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken'); // Importado JWT
-const Usuario = require('../models/Usuario');
+const jwt = require('jsonwebtoken');
+const Usuario = require('../models/Usuario'); // Certifique-se do caminho
 
 const router = express.Router();
 
-// Rota de Cadastro de Usuário
-// POST /api/usuarios/cadastro
-router.post('/cadastro', async (req, res) => {
-    try {
-        const { nome, email, senha } = req.body;
+// --- Rota de Cadastro ---
+router.post('/register', async (req, res) => {
+    // DEBUG: Veja exatamente o que chega
+    console.log('Dados recebidos no req.body:', req.body);
 
+    // Evita crash se req.body for undefined
+    const { nome, email, senha, telefone, tipo } = req.body || {};
+
+    // Validação mínima
+    if (!nome || !email || !senha) {
+        return res.status(400).json({ msg: 'Nome, email e senha são obrigatórios.' });
+    }
+
+    try {
+        // Verifica se email já existe
         const usuarioExistente = await Usuario.findOne({ where: { email } });
         if (usuarioExistente) {
             return res.status(400).json({ msg: 'Email já cadastrado.' });
         }
 
+        // Criptografa senha
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha, salt);
 
-        await Usuario.create({
+        // Cria usuário
+        const novoUsuario = await Usuario.create({
             nome,
             email,
-            senha: senhaCriptografada
+            senha: senhaCriptografada,
+            telefone: telefone || null,
+            tipo: tipo || 'aluno'
         });
 
-        res.status(201).json({ msg: 'Usuário cadastrado com sucesso!' });
+        // Retorna sucesso (sem a senha)
+        res.status(201).json({
+            msg: 'Usuário cadastrado com sucesso!',
+            usuario: {
+                id: novoUsuario.id_usuario,
+                nome: novoUsuario.nome,
+                email: novoUsuario.email
+            }
+        });
 
     } catch (err) {
         console.error('Erro no cadastro:', err);
-        res.status(500).json({ msg: 'Erro no servidor.' });
+        res.status(500).json({ msg: 'Erro interno no servidor ao tentar cadastrar.' });
     }
 });
 
-
-// Rota para login de usuário
-// POST /api/usuarios/login
+// --- Rota de Login ---
 router.post('/login', async (req, res) => {
+    console.log('Login recebido:', req.body);
+    const { email, senha } = req.body || {};
+
+    if (!email || !senha) {
+        return res.status(400).json({ msg: 'Email e senha são obrigatórios.' });
+    }
+
     try {
-        const { email, senha } = req.body;
-
         const usuario = await Usuario.findOne({ where: { email } });
-
-        if (!usuario) {
-            return res.status(404).json({ msg: 'Credenciais inválidas.' });
-        }
+        if (!usuario) return res.status(401).json({ msg: 'Credenciais inválidas.' });
 
         const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+        if (!senhaCorreta) return res.status(401).json({ msg: 'Credenciais inválidas.' });
 
-        if (!senhaCorreta) {
-            return res.status(401).json({ msg: 'Credenciais inválidas.' });
-        }
-        
-        // ------------------------------------------------------------------
-        // --- DEBUG: EXIBE O OBJETO RETORNADO PARA VER SE O ID ESTÁ CORRETO
-        console.log('Objeto do Usuário retornado do DB:', usuario.toJSON());
-        // ------------------------------------------------------------------
+        const jwtSecret = (process.env.JWT_SECRET || 'sua_chave_secreta_padrao_insegura').trim();
+        const payload = { id: usuario.id_usuario, nome: usuario.nome };
+        const token = jwt.sign(payload, jwtSecret, { expiresIn: '24h' });
 
-        // Tenta identificar qual é o ID real: id_usuario ou id
-        const userId = usuario.id_usuario || usuario.id; 
-        
-        if (!userId) {
-             // Este erro só ocorre se o Sequelize não retornar a PK
-            console.error('Sequelize não retornou a Chave Primária (id_usuario ou id).');
-            return res.status(500).json({ msg: 'Erro de mapeamento da chave primária.' });
-        }
-
-        // --- GERAÇÃO DO TOKEN ---
-        // backend/routes/usuarioRoutes.js - NA ROTA DE LOGIN
-
-// ...
-        // 1. Garante que JWT_SECRET é uma string limpa. Se for undefined, usa uma string vazia (que falhará, mas com erro claro).
-        const jwtSecret = (process.env.JWT_SECRET || 'fallback_secret').trim();
-        
-        // --- GERAÇÃO DO TOKEN ---
-        const token = jwt.sign(
-            { id: usuario.id_usuario, nome: usuario.nome },
-            jwtSecret, // Usa a chave limpa
-            { expiresIn: '24h' }
-        );
-// ...
-        // Prepara os dados para o cliente
-        const usuarioDados = {
-            id: userId, // Usa o userId
-            nome: usuario.nome,
-            email: usuario.email
-        };
-
-        // 3. Login bem-sucedido! Envia o token e os dados
-        return res.status(200).json({ 
-            msg: 'Login bem-sucedido!', 
-            token, 
-            usuario: usuarioDados
+        res.status(200).json({
+            msg: 'Login bem-sucedido!',
+            token,
+            usuario: {
+                id: usuario.id_usuario,
+                nome: usuario.nome,
+                email: usuario.email
+            }
         });
 
     } catch (err) {
-        // Agora, o console.error vai capturar qualquer erro na lógica ou no JWT
-        console.error('Erro no login (após sucesso de senha):', err);
-        res.status(500).json({ msg: 'Erro no servidor.' });
+        console.error('Erro no login:', err);
+        res.status(500).json({ msg: 'Erro interno no servidor ao tentar fazer login.' });
     }
 });
 
