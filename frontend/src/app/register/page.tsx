@@ -23,7 +23,6 @@ export default function RegisterPage() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Remove erro do campo enquanto o usuário digita
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
