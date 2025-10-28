@@ -1,9 +1,8 @@
-// src/services/api.ts
 import axios from 'axios';
 
-// A URL base do seu Backend (Express)
+// URL base do backend (ajuste a porta conforme seu server)
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api', 
+  baseURL: 'http://localhost:4000/api', // ajuste se seu backend estiver em outra porta
   headers: {
     'Content-Type': 'application/json',
   }

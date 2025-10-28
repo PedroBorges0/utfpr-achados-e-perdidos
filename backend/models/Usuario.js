@@ -1,9 +1,7 @@
-// backend/models/Usuario.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/database');
 
-// NOTE: REMOVEMOS A DEFINIÇÃO DE TIPO_USUARIO AQUI PARA EVITAR O CONFLITO.
-
+// Definição do modelo Usuario
 const Usuario = sequelize.define('Usuario', {
     id_usuario: { 
         type: DataTypes.INTEGER,
@@ -27,19 +25,11 @@ const Usuario = sequelize.define('Usuario', {
         type: DataTypes.STRING(20),
         allowNull: true,
     },
-    // ... outros campos acima
-    telefone: {
-        type: DataTypes.STRING(20),
-        allowNull: true,
-    },
     tipo: {
-        // Usa o objeto ENUM e forçamos o Sequelize a reconhecer o nome do tipo customizado
+        // ENUM direto no Sequelize, sem precisar criar tipo customizado no SQL
         type: DataTypes.ENUM('aluno', 'professor', 'funcionario', 'visitante'),
         allowNull: false,
         defaultValue: 'aluno',
-        // CHAVE SECRETA: Diz ao Sequelize para usar o tipo ENUM que JÁ EXISTE no BD.
-        // O nome do seu tipo é 'tipo_usuario', criado no SQL.
-        type: 'tipo_usuario'
     },
     ativo: {
         type: DataTypes.BOOLEAN,
@@ -47,8 +37,8 @@ const Usuario = sequelize.define('Usuario', {
     },
 }, {
     tableName: 'usuarios',
-    timestamps: false, 
-    freezeTableName: true, 
+    timestamps: false,
+    freezeTableName: true,
 });
 
 module.exports = Usuario;

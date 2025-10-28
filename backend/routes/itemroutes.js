@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // backend/routes/itemRoutes.js (VERSÃO FINAL LIMPA - NODE.JS)
 
 const express = require('express');
@@ -196,4 +197,3 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
-module.exports = router;

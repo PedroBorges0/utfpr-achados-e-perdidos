@@ -1,0 +1,7 @@
+Ignore dependências locais
+
+node_modules
+
+Ignore ficheiros de ambiente
+
+.env

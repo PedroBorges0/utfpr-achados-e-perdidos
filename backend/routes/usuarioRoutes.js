@@ -118,6 +118,3 @@ router.get('/me', auth, async (req, res) => {
         res.status(500).json({ msg: 'Erro no servidor ao buscar perfil.' });
     }
 });
-
-
-module.exports = router;
