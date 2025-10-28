@@ -1,9 +1,22 @@
-<<<<<<< HEAD
-// backend/routes/itemRoutes.js (VERSÃO FINAL LIMPA - NODE.JS)
-
+// backend/routes/itemRoutes.js — versão final com upload e status funcionando
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth'); // Middleware de segurança JWT
+const auth = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+// Configuração do multer para salvar imagens
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../uploads'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  },
+});
+const upload = multer({ storage });
 
 // --- Importação dos Modelos ---
 const Item = require('../models/Item');
@@ -16,184 +29,132 @@ const StatusItem = require('../models/StatusItem');
 // ROTA 1: CRIAR NOVO ITEM (POST - PROTEGIDA)
 // =========================================================
 // POST /api/itens
-router.post('/', auth, async (req, res) => {
-    try {
-        // ID do usuário logado vem do token JWT
-        const idUsuarioLogado = req.usuario.id;
+router.post('/', auth, upload.single('imagem'), async (req, res) => {
+  try {
+    console.log('📦 BODY RECEBIDO:', req.body);
+    console.log('📎 FILE RECEBIDO:', req.file);
 
-        const {
-            titulo,
-            descricao,
-            caracteristicas,
-            id_categoria,
-            id_localizacao_encontrado,
-            data_encontrado,
-            // Adicione 'imagem' aqui se estiver usando no model
-        } = req.body;
+    const idUsuarioLogado = req.usuario.id;
 
-        const novoItem = await Item.create({
-            titulo,
-            descricao,
-            caracteristicas,
-            id_categoria,
-            id_localizacao_encontrado,
-            id_usuario_cadastrou: idUsuarioLogado,
-            data_encontrado,
-        });
+    // Dados vindos do FormData
+    const {
+      titulo,
+      descricao,
+      caracteristicas,
+      id_categoria,
+      id_localizacao_encontrado,
+      id_status,
+      data_encontrado,
+    } = req.body;
 
-        res.status(201).json({
-            msg: 'Item registrado com sucesso!',
-            item: { id_item: novoItem.id_item, titulo: novoItem.titulo, data_encontrado: novoItem.data_encontrado }
-        });
-
-    } catch (err) {
-        console.error('Erro ao registrar item:', err);
-        res.status(500).json({ msg: 'Erro no servidor ao registrar item.', details: err.message });
+    // Verificação básica
+    if (!titulo || !descricao || !id_categoria || !id_localizacao_encontrado || !id_status) {
+      return res.status(400).json({ msg: 'Campos obrigatórios ausentes no formulário.' });
     }
+
+    // Caminho da imagem, se enviada
+    const imagem = req.file ? req.file.filename : null;
+
+    // Criação do item
+    const novoItem = await Item.create({
+      titulo,
+      descricao,
+      caracteristicas,
+      id_categoria,
+      id_localizacao_encontrado,
+      id_usuario_cadastrou: idUsuarioLogado,
+      id_status,
+      data_encontrado,
+      imagem,
+    });
+
+    res.status(201).json({
+      msg: 'Item registrado com sucesso!',
+      item: {
+        id_item: novoItem.id_item,
+        titulo: novoItem.titulo,
+        data_encontrado: novoItem.data_encontrado,
+        imagem: novoItem.imagem,
+      },
+    });
+  } catch (err) {
+    console.error('❌ Erro ao registrar item:', err);
+    res.status(500).json({
+      msg: 'Erro no servidor ao registrar item.',
+      details: err.message,
+    });
+  }
 });
 
-
 // =========================================================
-// ROTA 2: BUSCAR ITENS DO USUÁRIO LOGADO (GET /meus-itens - PROTEGIDA)
-// É importante que esta rota venha antes de ROTA 3 (/api/itens/:id)
+// ROTA 2: BUSCAR ITENS DO USUÁRIO LOGADO (GET /meus-itens)
 // =========================================================
-// GET /api/itens/meus-itens
 router.get('/meus-itens', auth, async (req, res) => {
-    try {
-        const idUsuarioLogado = req.usuario.id; // ID do usuário vem do token JWT
+  try {
+    const idUsuarioLogado = req.usuario.id;
 
-        const meusItens = await Item.findAll({
-            where: { id_usuario_cadastrou: idUsuarioLogado },
-            order: [['id_item', 'DESC']],
-            include: [
-                { model: Categoria, as: 'Categoria', attributes: ['nome'] },
-                { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
-                { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
-            ]
-        });
+    const meusItens = await Item.findAll({
+      where: { id_usuario_cadastrou: idUsuarioLogado },
+      order: [['id_item', 'DESC']],
+      include: [
+        { model: Categoria, as: 'Categoria', attributes: ['nome'] },
+        { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
+        { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
+      ],
+    });
 
-        res.status(200).json(meusItens);
-
-    } catch (err) {
-        console.error('Erro ao buscar meus itens:', err);
-        res.status(500).json({ msg: 'Erro no servidor ao buscar seus itens.', details: err.message });
-    }
+    res.status(200).json(meusItens);
+  } catch (err) {
+    console.error('Erro ao buscar meus itens:', err);
+    res.status(500).json({ msg: 'Erro ao buscar seus itens.', details: err.message });
+  }
 });
-
 
 // =========================================================
 // ROTA 3: LISTAR TODOS OS ITENS (GET - PÚBLICA)
 // =========================================================
-// GET /api/itens
 router.get('/', async (req, res) => {
-    try {
-        const itens = await Item.findAll({
-            order: [['id_item', 'DESC']],
-            include: [
-                { model: Categoria, as: 'Categoria', attributes: ['nome'] },
-                { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
-                { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
-                { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] }
-            ]
-        });
+  try {
+    const itens = await Item.findAll({
+      order: [['id_item', 'DESC']],
+      include: [
+        { model: Categoria, as: 'Categoria', attributes: ['nome'] },
+        { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
+        { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
+        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] },
+      ],
+    });
 
-        res.status(200).json(itens);
-
-    } catch (err) {
-        console.error('Erro ao listar itens:', err);
-        res.status(500).json({ msg: 'Erro no servidor ao listar itens.', details: err.message });
-    }
+    res.status(200).json(itens);
+  } catch (err) {
+    console.error('Erro ao listar itens:', err);
+    res.status(500).json({ msg: 'Erro no servidor ao listar itens.', details: err.message });
+  }
 });
-
 
 // =========================================================
 // ROTA 4: BUSCAR ITEM POR ID (GET - PÚBLICA)
 // =========================================================
-// GET /api/itens/:id
 router.get('/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const item = await Item.findByPk(id, {
-            include: [
-                { model: Categoria, as: 'Categoria', attributes: ['nome'] },
-                { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
-                { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
-                { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] }
-            ]
-        });
+    const item = await Item.findByPk(id, {
+      include: [
+        { model: Categoria, as: 'Categoria', attributes: ['nome'] },
+        { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
+        { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
+        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] },
+      ],
+    });
 
-        if (!item) {
-            return res.status(404).json({ msg: 'Item não encontrado.' });
-        }
+    if (!item) return res.status(404).json({ msg: 'Item não encontrado.' });
 
-        res.status(200).json(item);
-
-    } catch (err) {
-        console.error(`Erro ao buscar item ${req.params.id}:`, err);
-        res.status(500).json({ msg: 'Erro no servidor ao buscar item.' });
-    }
+    res.status(200).json(item);
+  } catch (err) {
+    console.error(`Erro ao buscar item ${req.params.id}:`, err);
+    res.status(500).json({ msg: 'Erro no servidor ao buscar item.' });
+  }
 });
 
-
-// =========================================================
-// ROTA 5: ATUALIZAR UM ITEM (PUT - PROTEGIDA)
-// =========================================================
-// PUT /api/itens/:id
-router.put('/:id', auth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const idUsuarioLogado = req.usuario.id;
-
-        const item = await Item.findByPk(id);
-
-        if (!item) {
-            return res.status(404).json({ msg: 'Item não encontrado.' });
-        }
-
-        if (item.id_usuario_cadastrou !== idUsuarioLogado) {
-            return res.status(403).json({ msg: 'Acesso negado. Você só pode atualizar itens que você cadastrou.' });
-        }
-
-        const dadosAtualizados = req.body;
-
-        await item.update(dadosAtualizados);
-
-        res.status(200).json({ msg: 'Item atualizado com sucesso!', item });
-
-    } catch (err) {
-        console.error(`Erro ao atualizar item ${req.params.id}:`, err);
-        res.status(500).json({ msg: 'Erro no servidor ao atualizar item.' });
-    }
-});
-
-
-// =========================================================
-// ROTA 6: DELETAR UM ITEM (DELETE - PROTEGIDA)
-// =========================================================
-// DELETE /api/itens/:id
-router.delete('/:id', auth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const idUsuarioLogado = req.usuario.id;
-
-        const item = await Item.findByPk(id);
-
-        if (!item) {
-            return res.status(404).json({ msg: 'Item não encontrado.' });
-        }
-
-        if (item.id_usuario_cadastrou !== idUsuarioLogado) {
-            return res.status(403).json({ msg: 'Acesso negado. Você só pode deletar itens que você cadastrou.' });
-        }
-
-        await item.destroy();
-
-        res.status(200).json({ msg: 'Item deletado com sucesso!' });
-
-    } catch (err) {
-        console.error(`Erro ao deletar item ${req.params.id}:`, err);
-        res.status(500).json({ msg: 'Erro no servidor ao deletar item.' });
-    }
-});
-
+module.exports = router;

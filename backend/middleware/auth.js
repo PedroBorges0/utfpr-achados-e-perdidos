@@ -1,82 +1,52 @@
-<<<<<<< HEAD
-// backend/middleware/auth.js (CORRIGIDO PARA JAVASCRIPT PURO)
-
+// backend/middleware/auth.js
 const jwt = require('jsonwebtoken');
 
-// A função que garante que o segredo usado no login é o mesmo usado na verificação
+// Função para obter o segredo JWT (usando variável de ambiente ou fallback)
 const getJwtSecret = () => (process.env.JWT_SECRET || 'fallback_secret_for_dev_mode').trim();
 
 // Middleware de autenticação
 module.exports = function (req, res, next) {
-    let token = req.header('Authorization');
-
-    // 1. Tenta extrair do cabeçalho "Authorization: Bearer <token>"
-    if (token && token.startsWith('Bearer ')) {
-        token = token.slice(7, token.length).trim();
-    } 
-    
-    // Fallback: Tenta usar o cabeçalho X-Auth-Token (legacy)
-    if (!token) {
-        token = req.header('x-auth-token'); 
-    }
-
-    // Verifica se o token existe após todas as tentativas
-    if (!token) {
-        return res.status(401).json({ msg: 'Nenhum token, autorização negada.' });
-    }
-
-    try {
-        const jwtSecret = getJwtSecret();
-        
-        // Verifica o token usando a chave consistente
-        // NOTA: A tipagem (err: any) foi removida do catch para evitar o erro de sintaxe.
-        const decoded = jwt.verify(token, jwtSecret); 
-        
-        // Adiciona o usuário do token (id e nome) ao objeto de requisição
-        req.usuario = decoded; 
-        
-        next(); // Passa para a próxima função (a rota)
-
-    } catch (err) { // <--- CORRIGIDO: Removida a tipagem ": any"
-        console.error('Erro na verificação do token:', err.message); 
-        return res.status(401).json({ msg: 'Token inválido ou expirado.' });
-    }
-};
-
-const jwt = require('jsonwebtoken');
-
-function auth(req, res, next) {
+    // Log de diagnóstico (útil em desenvolvimento)
     console.log('Recebido cabeçalho Authorization:', req.header('Authorization'));
     console.log('Recebido cabeçalho x-auth-token:', req.header('x-auth-token'));
 
-    const authHeader = req.header('Authorization');
-    const xAuthToken = req.header('x-auth-token');
-
     let token = null;
 
+    // 1. Verifica se existe cabeçalho Authorization: Bearer <token>
+    const authHeader = req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7);
-    } else if (xAuthToken) {
-        token = xAuthToken;
+        token = authHeader.substring(7).trim();
     }
 
+    // 2. Alternativa: tenta cabeçalho x-auth-token (para compatibilidade)
+    if (!token) {
+        token = req.header('x-auth-token');
+    }
+
+    // 3. Se ainda não houver token → erro 401
     if (!token) {
         return res.status(401).json({ msg: 'Acesso negado. Token não fornecido.' });
     }
 
     try {
-        const secret = (process.env.JWT_SECRET || 'fallback_secret').trim();
+        // Obtém o segredo usado para validar o token
+        const secret = getJwtSecret();
 
-        // 🔐 Log para verificar qual segredo está sendo usado para validar
-        console.log('🔐 Segredo usado para validar token:', secret);
+        // Log do segredo usado (apenas em ambiente de desenvolvimento)
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('🔐 Segredo usado para validar token:', secret);
+        }
 
+        // 4. Verifica e decodifica o token JWT
         const decoded = jwt.verify(token, secret);
-        req.usuario = decoded;
-        next();
-    } catch (e) {
-        console.error("Erro na verificação do token:", e.message);
-        res.status(400).json({ msg: 'Token inválido.' });
-    }
-}
 
-module.exports = auth;
+        // 5. Anexa os dados do usuário decodificado ao objeto de requisição
+        req.usuario = decoded;
+
+        // 6. Continua para a próxima função ou rota
+        next();
+    } catch (err) {
+        console.error('Erro na verificação do token:', err.message);
+        return res.status(401).json({ msg: 'Token inválido ou expirado.' });
+    }
+};

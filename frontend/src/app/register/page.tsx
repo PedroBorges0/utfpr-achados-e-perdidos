@@ -1,3 +1,4 @@
+// src/app/register/page.tsx — versão final corrigida e validada
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
@@ -19,19 +20,20 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- Atualiza campos ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  // --- Validação simples ---
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.nome.trim()) newErrors.nome = "*Campo obrigatório.";
     if (!formData.email.trim()) newErrors.email = "*Campo obrigatório.";
-    else if (!formData.email.includes("@") || !formData.email.includes(".com"))
+    else if (!formData.email.includes("@") || !formData.email.includes("."))
       newErrors.email = "*E-mail inválido.";
 
     if (!formData.senha.trim()) newErrors.senha = "*Campo obrigatório.";
@@ -43,6 +45,7 @@ export default function RegisterPage() {
     return newErrors;
   };
 
+  // --- Envio do formulário ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateForm();
@@ -54,34 +57,34 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await api.post("/usuarios/register", {
+      const response = await api.post("/usuarios/cadastro", {
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
       });
 
-      alert("Cadastro realizado com sucesso! Faça login para continuar.");
+      alert(response.data.msg || "✅ Cadastro realizado com sucesso!");
       router.push("/login");
     } catch (err: any) {
       const msg = err.response?.data?.msg || "Erro desconhecido ao cadastrar.";
-      alert(`Falha no cadastro: ${msg}`);
+      alert(`❌ Falha no cadastro: ${msg}`);
+      console.error("Erro ao cadastrar usuário:", err.response || err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --- Renderização ---
   return (
     <>
       <Head>
         <title>UTFPR - Cadastro de Usuário</title>
       </Head>
       <main
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{ backgroundColor: "var(--background)" }}
+        className="min-h-screen flex items-center justify-center p-4 bg-yellow-400"
       >
         <div
-          className="w-full max-w-lg p-10 rounded-2xl border-4 border-gray-700 flex flex-col items-center"
-          style={{ backgroundColor: "var(--form-background)" }}
+          className="w-full max-w-lg p-10 rounded-2xl border-4 border-gray-700 flex flex-col items-center bg-white shadow-2xl"
         >
           <Image
             src="/utfpr-logo.png"
@@ -94,12 +97,12 @@ export default function RegisterPage() {
             CRIAR CONTA
           </h1>
 
-          {/* Apenas esta linha foi alterada — adicionado noValidate */}
           <form
             onSubmit={handleSubmit}
             noValidate
             className="w-full flex flex-col gap-4"
           >
+            {/* NOME */}
             <div>
               <label
                 htmlFor="nome"
@@ -112,6 +115,7 @@ export default function RegisterPage() {
                 name="nome"
                 type="text"
                 onChange={handleChange}
+                value={formData.nome}
                 className={`w-full bg-white rounded-lg px-4 py-2 shadow-sm border ${
                   errors.nome ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-yellow-400`}
@@ -121,6 +125,7 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* EMAIL */}
             <div>
               <label
                 htmlFor="email"
@@ -133,6 +138,7 @@ export default function RegisterPage() {
                 name="email"
                 type="email"
                 onChange={handleChange}
+                value={formData.email}
                 className={`w-full bg-white rounded-lg px-4 py-2 shadow-sm border ${
                   errors.email ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-yellow-400`}
@@ -142,6 +148,7 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* SENHA */}
             <div>
               <label
                 htmlFor="senha"
@@ -154,6 +161,7 @@ export default function RegisterPage() {
                 name="senha"
                 type="password"
                 onChange={handleChange}
+                value={formData.senha}
                 className={`w-full bg-white rounded-lg px-4 py-2 shadow-sm border ${
                   errors.senha ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-yellow-400`}
@@ -163,6 +171,7 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* CONFIRMAR SENHA */}
             <div>
               <label
                 htmlFor="confirmPassword"
@@ -175,8 +184,11 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 type="password"
                 onChange={handleChange}
+                value={formData.confirmPassword}
                 className={`w-full bg-white rounded-lg px-4 py-2 shadow-sm border ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                  errors.confirmPassword
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-yellow-400`}
               />
               {errors.confirmPassword && (
@@ -186,6 +198,7 @@ export default function RegisterPage() {
               )}
             </div>
 
+            {/* BOTÃO */}
             <button
               type="submit"
               className="w-full mt-4 bg-yellow-400 text-yellow-900 font-bold px-6 py-3 rounded-full cursor-pointer hover:bg-yellow-500 transition-colors shadow-md"
