@@ -36,7 +36,8 @@ export default function Vitrine() {
             try {
                 const user = JSON.parse(userJson);
                 setIsAuthenticated(true);
-                setUserName(user.nome.split(' ')[0]);
+                // Assume que o objeto user do localStorage tem o nome
+                setUserName(user.nome.split(' ')[0]); 
             } catch (e) {
                 localStorage.clear();
             }
@@ -102,7 +103,10 @@ export default function Vitrine() {
                     {/* BOTÃO CONDICIONAL: LOGOUT ou LOGIN */}
                     {isAuthenticated ? (
                         <div className="flex items-center gap-4">
-                            <span className="text-lg font-semibold text-gray-700">Olá, {userName}!</span>
+                            {/* AQUI ESTÁ O LINK PARA O PERFIL */}
+                            <Link href="/perfil" className="text-lg font-semibold text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+                                Olá, {userName}!
+                            </Link>
                             <button 
                                 onClick={handleLogout}
                                 className="bg-red-600 text-white font-bold text-md px-6 py-3 rounded-full shadow-lg hover:bg-red-700 transition-colors"
@@ -123,7 +127,6 @@ export default function Vitrine() {
             {/* BOTÃO DE CADASTRO DE ITEM (FLUTUANTE) */}
             <div className="fixed bottom-8 right-8">
                 <Link 
-                    // Link corrigido para a pasta que você criou
                     href={isAuthenticated ? "/cadastro" : "/login"} 
                     className="bg-yellow-400 text-yellow-900 font-bold text-lg px-6 py-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors"
                 >

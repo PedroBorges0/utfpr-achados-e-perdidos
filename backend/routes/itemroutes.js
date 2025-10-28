@@ -1,4 +1,4 @@
-// backend/routes/itemRoutes.js
+// backend/routes/itemRoutes.js (VERSÃO FINAL LIMPA - NODE.JS)
 
 const express = require('express');
 const router = express.Router();
@@ -26,7 +26,8 @@ router.post('/', auth, async (req, res) => {
             caracteristicas,
             id_categoria,
             id_localizacao_encontrado,
-            data_encontrado
+            data_encontrado,
+            // Adicione 'imagem' aqui se estiver usando no model
         } = req.body;
 
         const novoItem = await Item.create({
@@ -52,7 +53,35 @@ router.post('/', auth, async (req, res) => {
 
 
 // =========================================================
-// ROTA 2: LISTAR TODOS OS ITENS (GET - PÚBLICA)
+// ROTA 2: BUSCAR ITENS DO USUÁRIO LOGADO (GET /meus-itens - PROTEGIDA)
+// É importante que esta rota venha antes de ROTA 3 (/api/itens/:id)
+// =========================================================
+// GET /api/itens/meus-itens
+router.get('/meus-itens', auth, async (req, res) => {
+    try {
+        const idUsuarioLogado = req.usuario.id; // ID do usuário vem do token JWT
+
+        const meusItens = await Item.findAll({
+            where: { id_usuario_cadastrou: idUsuarioLogado },
+            order: [['id_item', 'DESC']],
+            include: [
+                { model: Categoria, as: 'Categoria', attributes: ['nome'] },
+                { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
+                { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
+            ]
+        });
+
+        res.status(200).json(meusItens);
+
+    } catch (err) {
+        console.error('Erro ao buscar meus itens:', err);
+        res.status(500).json({ msg: 'Erro no servidor ao buscar seus itens.', details: err.message });
+    }
+});
+
+
+// =========================================================
+// ROTA 3: LISTAR TODOS OS ITENS (GET - PÚBLICA)
 // =========================================================
 // GET /api/itens
 router.get('/', async (req, res) => {
@@ -77,7 +106,7 @@ router.get('/', async (req, res) => {
 
 
 // =========================================================
-// ROTA 3: BUSCAR ITEM POR ID (GET - PÚBLICA)
+// ROTA 4: BUSCAR ITEM POR ID (GET - PÚBLICA)
 // =========================================================
 // GET /api/itens/:id
 router.get('/:id', async (req, res) => {
@@ -107,7 +136,7 @@ router.get('/:id', async (req, res) => {
 
 
 // =========================================================
-// ROTA 4: ATUALIZAR UM ITEM (PUT - PROTEGIDA)
+// ROTA 5: ATUALIZAR UM ITEM (PUT - PROTEGIDA)
 // =========================================================
 // PUT /api/itens/:id
 router.put('/:id', auth, async (req, res) => {
@@ -139,7 +168,7 @@ router.put('/:id', auth, async (req, res) => {
 
 
 // =========================================================
-// ROTA 5: DELETAR UM ITEM (DELETE - PROTEGIDA)
+// ROTA 6: DELETAR UM ITEM (DELETE - PROTEGIDA)
 // =========================================================
 // DELETE /api/itens/:id
 router.delete('/:id', auth, async (req, res) => {

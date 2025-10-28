@@ -1,4 +1,4 @@
-// src/app/cadastro/page.tsx (CORRIGIDO PARA API)
+// src/app/cadastro/page.tsx (FINAL COM BOTÃO DE VOLTAR)
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -77,7 +77,6 @@ export default function CadastroPage() {
         if (!formData.descricao) tempErrors.descricao = true;
         if (!formData.categoriaNome) tempErrors.categoriaNome = true;
         if (!formData.localNome) tempErrors.localNome = true;
-        // Data_encontrado é opcional, mas se for preenchido, deve ser válido.
         
         setErrors(tempErrors);
         return Object.keys(tempErrors).length === 0;
@@ -97,17 +96,15 @@ export default function CadastroPage() {
                 titulo: formData.titulo,
                 descricao: formData.descricao,
                 caracteristicas: formData.caracteristicas,
-                // CONVERSÃO CRUCIAL: Envia IDs válidos como números
                 id_categoria: parseInt(formData.categoriaNome), 
                 id_localizacao_encontrado: parseInt(formData.localNome), 
-                // Data: Garante que a data seja enviada no formato YYYY-MM-DD
                 data_encontrado: formData.data_encontrado || new Date().toISOString().split('T')[0],
             };
 
             // Chamada API: ENVIO DO TOKEN JWT NO HEADER
             const response = await api.post('/itens', payload, {
                 headers: {
-                    Authorization: `Bearer ${token}`, // AQUI ESTÁ O SEGREDO
+                    Authorization: `Bearer ${token}`, 
                 },
             });
 
@@ -115,7 +112,6 @@ export default function CadastroPage() {
             router.push('/'); // Redireciona para a vitrine
 
         } catch (err: any) {
-            // Se a violação de FK ainda ocorrer, o erro virá daqui
             const msg = err.response?.data?.details || err.response?.data?.msg || "Erro desconhecido ao cadastrar item.";
             alert(`Falha no cadastro: ${msg}. Verifique o console para detalhes.`);
             console.error("Erro completo da API:", err.response || err);
@@ -135,9 +131,17 @@ export default function CadastroPage() {
 
             <main className="min-h-screen flex items-center justify-center p-4">
                 <div 
-                    className="w-full max-w-5xl p-10 rounded-2xl border-4 border-gray-700 flex flex-col items-center"
+                    className="w-full max-w-5xl p-10 rounded-2xl border-4 border-gray-700 flex flex-col items-center relative" // Adicionado 'relative' para o botão
                     style={{ backgroundColor: 'var(--form-background)' }}
                 >
+                    
+                    {/* BOTÃO DE VOLTAR PARA A VITRINE */}
+                    <Link 
+                        href="/" 
+                        className="absolute top-4 left-4 bg-gray-800 text-white font-bold px-4 py-2 rounded-full shadow-md hover:bg-black transition-colors"
+                    >
+                        &larr; Voltar
+                    </Link>
                     
                     <Image
                         src="/utfpr-logo.png"
