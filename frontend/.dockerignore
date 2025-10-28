@@ -1,0 +1,7 @@
+Ignore dependências locais
+
+node_modules
+
+Ignore o output do build do Next.js
+
+.next
