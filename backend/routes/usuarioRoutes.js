@@ -1,35 +1,29 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Usuario = require('../models/Usuario'); // Certifique-se do caminho
+const Usuario = require('../models/Usuario');
 
 const router = express.Router();
 
 // --- Rota de Cadastro ---
 router.post('/register', async (req, res) => {
-    // DEBUG: Veja exatamente o que chega
     console.log('Dados recebidos no req.body:', req.body);
 
-    // Evita crash se req.body for undefined
     const { nome, email, senha, telefone, tipo } = req.body || {};
 
-    // Validação mínima
     if (!nome || !email || !senha) {
         return res.status(400).json({ msg: 'Nome, email e senha são obrigatórios.' });
     }
 
     try {
-        // Verifica se email já existe
         const usuarioExistente = await Usuario.findOne({ where: { email } });
         if (usuarioExistente) {
             return res.status(400).json({ msg: 'Email já cadastrado.' });
         }
 
-        // Criptografa senha
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha, salt);
 
-        // Cria usuário
         const novoUsuario = await Usuario.create({
             nome,
             email,
@@ -38,7 +32,6 @@ router.post('/register', async (req, res) => {
             tipo: tipo || 'aluno'
         });
 
-        // Retorna sucesso (sem a senha)
         res.status(201).json({
             msg: 'Usuário cadastrado com sucesso!',
             usuario: {
@@ -71,6 +64,9 @@ router.post('/login', async (req, res) => {
         if (!senhaCorreta) return res.status(401).json({ msg: 'Credenciais inválidas.' });
 
         const jwtSecret = (process.env.JWT_SECRET || 'sua_chave_secreta_padrao_insegura').trim();
+
+        console.log(' Segredo usado para criar token:', jwtSecret);
+
         const payload = { id: usuario.id_usuario, nome: usuario.nome };
         const token = jwt.sign(payload, jwtSecret, { expiresIn: '24h' });
 
