@@ -26,7 +26,6 @@ export default function Vitrine() {
   const [userName, setUserName] = useState("");
   const [avatar, setAvatar] = useState("/default-avatar.png");
 
-  // --- VERIFICA AUTENTICAÇÃO E CARREGA ITENS ---
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userJson = localStorage.getItem("user");
@@ -50,6 +49,7 @@ export default function Vitrine() {
             ? `http://localhost:4000/uploads/${item.imagem}`
             : "/images/default.png",
         }));
+
         setItems(data);
       } catch (err: any) {
         setError(
@@ -65,7 +65,6 @@ export default function Vitrine() {
     fetchItems();
   }, []);
 
-  // --- LOGOUT ---
   const handleLogout = () => {
     localStorage.clear();
     setIsAuthenticated(false);
@@ -109,74 +108,90 @@ export default function Vitrine() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ backgroundColor: "var(--background)" }}
     >
-      <div
-        className="w-full max-w-7xl p-10 rounded-2xl border-4 border-gray-700 shadow-2xl"
-        style={{ backgroundColor: "var(--form-background)" }}
-      >
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-          {/* Logo e título */}
-          <div className="flex items-center gap-6">
+      <div className="w-full bg-white border-b-4 border-black px-8 py-3 flex items-center justify-between fixed top-0 left-0 z-50">
+
+        <div className="flex items-center gap-6">
+
+          <Image
+            src="/utfpr-logo.png"
+            alt="Logo UTFPR"
+            width={140}
+            height={140}
+          />
+
+          <div className="flex flex-col items-center">
             <Image
-              src="/utfpr-logo.png"
-              alt="Logo UTFPR"
-              width={180}
-              height={180}
+              src={isAuthenticated ? avatar : "/default-avatar.png"}
+              alt="Avatar"
+              width={48}
+              height={48}
+              className="rounded-full border border-gray-400"
+              unoptimized
             />
-            <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md whitespace-nowrap">
-              ACHADOS E PERDIDOS
-            </h1>
+            <span className="text-md font-semibold text-gray-800 mt-1">
+              {isAuthenticated ? userName : "Anônimo"}
+            </span>
           </div>
 
-          {/* Área de usuário */}
-          {isAuthenticated ? (
-            <div className="flex items-center gap-4 self-center md:self-auto">
-              <Image
-                src={avatar}
-                alt="Avatar"
-                width={48}
-                height={48}
-                className="rounded-full border-2 border-gray-500"
-                unoptimized
-              />
-              <span className="text-lg font-semibold text-gray-800">
-                Olá, {userName}!
-              </span>
+        </div>
 
+        <div className="flex items-center gap-8">
+
+          {isAuthenticated ? (
+            <>
               <Link
                 href="/perfil"
-                className="bg-black text-white font-semibold px-6 py-2 rounded-full hover:bg-gray-800 transition-colors shadow-md"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
               >
                 Ver Perfil
               </Link>
 
+              <Link
+                href="/cadastro"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Cadastrar item
+              </Link>
+
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white font-semibold px-6 py-2 rounded-full hover:bg-red-700 transition-colors shadow-md"
+                className="bg-red-600 text-white font-semibold px-5 py-2 rounded-full shadow hover:bg-red-700 transition"
               >
                 Sair
               </button>
-            </div>
+            </>
           ) : (
-            <Link
-              href="/login"
-              className="bg-gray-800 text-white font-bold text-md px-8 py-3 rounded-full shadow-lg hover:bg-black transition-colors"
-            >
-              Login
-            </Link>
-          )}
-        </header>
+            <>
+              <Link
+                href="/cadastro"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Cadastrar item
+              </Link>
 
-        {renderContent()}
+              <Link
+                href="/login"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Login
+              </Link>
+            </>
+          )}
+
+        </div>
       </div>
 
-      {/* BOTÃO DE CADASTRAR ITEM */}
-      <div className="fixed bottom-8 right-8">
-        <Link
-          href={isAuthenticated ? "/cadastro" : "/login"}
-          className="bg-black text-white font-semibold text-lg px-8 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-all"
-        >
-          Cadastrar um item
-        </Link>
+      <div
+        className="w-full max-w-7xl p-0 rounded-2xl border-4 border-gray-700 shadow-2xl overflow-hidden mt-32"
+        style={{ backgroundColor: "var(--form-background)" }}
+      >
+        <header className="w-full flex items-center justify-center px-10 py-10">
+          <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md">
+            ACHADOS E PERDIDOS
+          </h1>
+        </header>
+
+        <div className="px-10 pb-10">{renderContent()}</div>
       </div>
     </main>
   );
