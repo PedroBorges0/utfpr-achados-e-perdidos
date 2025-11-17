@@ -19,12 +19,24 @@ interface ItemAPI {
 
 export default function Vitrine() {
   const router = useRouter();
+
   const [items, setItems] = useState<ItemAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("Anônimo");
   const [avatar, setAvatar] = useState("/default-avatar.png");
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [filterCategoria, setFilterCategoria] = useState("");
+  const [filterLocal, setFilterLocal] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [locais, setLocais] = useState<any[]>([]);
+  const [statusList, setStatusList] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -35,6 +47,7 @@ export default function Vitrine() {
         const user = JSON.parse(userJson);
         setIsAuthenticated(true);
         setUserName(user.nome.split(" ")[0]);
+        if (user.avatar) setAvatar(user.avatar);
       } catch {
         localStorage.clear();
       }
@@ -49,54 +62,89 @@ export default function Vitrine() {
             ? `http://localhost:4000/uploads/${item.imagem}`
             : "/images/default.png",
         }));
-
         setItems(data);
       } catch (err: any) {
-        setError(
-          "Erro ao carregar itens: " +
-            (err.message ||
-              "Verifique se o backend está rodando na porta 4000.")
-        );
+        setError("Erro ao carregar itens: " + err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
+    const fetchFilters = async () => {
+      try {
+        const [cats, locs, stats] = await Promise.all([
+          api.get("/categorias"),
+          api.get("/localizacoes"),
+          api.get("/statusitens"), 
+        ]);
+
+        setCategorias(cats.data);
+        setLocais(locs.data);
+        setStatusList(stats.data);
+      } catch (err) {
+        console.error("Erro ao carregar filtros:", err);
+      }
+    };
+
     fetchItems();
+    fetchFilters();
   }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     setIsAuthenticated(false);
-    setUserName("");
     router.push("/login");
   };
 
+  const applyFilters = () => {
+    let filtered = items;
+
+    if (searchQuery.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.titulo.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (filterCategoria !== "") {
+      filtered = filtered.filter(
+        (item) => item.Categoria?.nome === filterCategoria
+      );
+    }
+
+    if (filterLocal !== "") {
+      filtered = filtered.filter(
+        (item) => item.LocalEncontrado?.nome === filterLocal
+      );
+    }
+
+    if (filterStatus !== "") {
+      filtered = filtered.filter(
+        (item) => item.StatusAtual?.descricao === filterStatus
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredItems = applyFilters();
+
   const renderContent = () => {
     if (isLoading)
-      return (
-        <p className="text-center text-xl font-semibold">
-          Carregando itens do banco de dados...
-        </p>
-      );
+      return <p className="text-center text-xl font-semibold">Carregando itens...</p>;
 
     if (error)
-      return (
-        <p className="text-center text-xl font-semibold text-red-500">
-          Erro: {error}
-        </p>
-      );
+      return <p className="text-center text-xl font-semibold text-red-500">{error}</p>;
 
-    if (items.length === 0)
+    if (filteredItems.length === 0)
       return (
         <p className="text-center text-xl font-semibold text-gray-600">
-          Nenhum item cadastrado no sistema.
+          Nenhum item encontrado.
         </p>
       );
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <ItemCard key={item.id_item} item={item} />
         ))}
       </div>
@@ -108,20 +156,20 @@ export default function Vitrine() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ backgroundColor: "var(--background)" }}
     >
-      <div className="w-full bg-white border-b-4 border-black px-8 py-3 flex items-center justify-between fixed top-0 left-0 z-50">
+
+      <div className="w-full bg-white border-b-4 border-black px-8 py-3 flex items-center justify-between gap-6 fixed top-0 left-0 z-50">
 
         <div className="flex items-center gap-6">
-
           <Image
             src="/utfpr-logo.png"
             alt="Logo UTFPR"
-            width={140}
-            height={140}
+            width={130}
+            height={130}
           />
 
           <div className="flex flex-col items-center">
             <Image
-              src={isAuthenticated ? avatar : "/default-avatar.png"}
+              src={avatar}
               alt="Avatar"
               width={48}
               height={48}
@@ -129,14 +177,68 @@ export default function Vitrine() {
               unoptimized
             />
             <span className="text-md font-semibold text-gray-800 mt-1">
-              {isAuthenticated ? userName : "Anônimo"}
+              {userName}
             </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar item..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 border border-gray-400 rounded-full w-64 focus:outline-none"
+            />
+            <button className="absolute right-3 top-1/2 -translate-y-1/2">
+              🔍
+            </button>
+          </div>
+
+          <select
+            value={filterCategoria}
+            onChange={(e) => setFilterCategoria(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Categoria</option>
+            {categorias.map((c: any) => (
+              <option key={c.id_categoria} value={c.nome}>
+                {c.nome}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterLocal}
+            onChange={(e) => setFilterLocal(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Local</option>
+            {locais.map((l: any) => (
+              <option key={l.id_localizacao} value={l.nome}>
+                {l.nome}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Status</option>
+            {statusList.map((s: any) => (
+              <option key={s.id_status} value={s.descricao}>
+                {s.descricao}
+              </option>
+            ))}
+          </select>
 
         </div>
 
-        <div className="flex items-center gap-8">
-
+        <div className="flex items-center gap-6">
           {isAuthenticated ? (
             <>
               <Link
@@ -155,7 +257,7 @@ export default function Vitrine() {
 
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white font-semibold px-5 py-2 rounded-full shadow hover:bg-red-700 transition"
+                className="bg-red-600 text-white font-semibold px-5 py-2 rounded-full hover:bg-red-700 transition"
               >
                 Sair
               </button>
@@ -177,12 +279,11 @@ export default function Vitrine() {
               </Link>
             </>
           )}
-
         </div>
       </div>
 
       <div
-        className="w-full max-w-7xl p-0 rounded-2xl border-4 border-gray-700 shadow-2xl overflow-hidden mt-32"
+        className="w-full max-w-7xl p-0 rounded-2xl border-4 border-gray-700 shadow-2xl overflow-hidden mt-40"
         style={{ backgroundColor: "var(--form-background)" }}
       >
         <header className="w-full flex items-center justify-center px-10 py-10">
