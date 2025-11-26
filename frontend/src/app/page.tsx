@@ -5,28 +5,19 @@ import Link from "next/link";
 import api from "@/services/api";
 import ItemCard from "@/components/ItemCard";
 import { useRouter } from "next/navigation";
-
-interface ItemAPI {
-  id_item: number;
-  titulo: string;
-  descricao: string;
-  data_encontrado: string;
-  Categoria?: { nome: string };
-  LocalEncontrado?: { nome: string };
-  StatusAtual?: { descricao: string; cor_hex?: string };
-  imagem?: string;
-}
+import { ItemAPI } from "@/types/ItemAPI";
 
 export default function Vitrine() {
   const router = useRouter();
   const [items, setItems] = useState<ItemAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
-  const [avatar, setAvatar] = useState("/default-avatar.png");
+  const [avatar] = useState("/default-avatar.png");
 
-  // --- VERIFICA AUTENTICAÇÃO E CARREGA ITENS ---
+  // --- CARREGAR USUÁRIO E ITENS ---
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userJson = localStorage.getItem("user");
@@ -44,19 +35,17 @@ export default function Vitrine() {
     const fetchItems = async () => {
       try {
         const response = await api.get("/itens");
-        const data = response.data.map((item: ItemAPI) => ({
+
+        const data: ItemAPI[] = response.data.map((item: any) => ({
           ...item,
           imagem: item.imagem
             ? `http://localhost:4000/uploads/${item.imagem}`
             : "/images/default.png",
         }));
+
         setItems(data);
       } catch (err: any) {
-        setError(
-          "Erro ao carregar itens: " +
-            (err.message ||
-              "Verifique se o backend está rodando na porta 4000.")
-        );
+        setError("Erro ao carregar itens. Verifique o backend.");
       } finally {
         setIsLoading(false);
       }
@@ -65,33 +54,27 @@ export default function Vitrine() {
     fetchItems();
   }, []);
 
-  // --- LOGOUT ---
+  // LOGOUT
   const handleLogout = () => {
     localStorage.clear();
     setIsAuthenticated(false);
-    setUserName("");
     router.push("/login");
   };
 
+  // RENDERIZAÇÃO PRINCIPAL
   const renderContent = () => {
     if (isLoading)
-      return (
-        <p className="text-center text-xl font-semibold">
-          Carregando itens do banco de dados...
-        </p>
-      );
+      return <p className="text-center text-xl font-semibold">Carregando itens...</p>;
 
     if (error)
       return (
-        <p className="text-center text-xl font-semibold text-red-500">
-          Erro: {error}
-        </p>
+        <p className="text-center text-xl font-semibold text-red-500">{error}</p>
       );
 
     if (items.length === 0)
       return (
         <p className="text-center text-xl font-semibold text-gray-600">
-          Nenhum item cadastrado no sistema.
+          Nenhum item cadastrado.
         </p>
       );
 
@@ -114,22 +97,17 @@ export default function Vitrine() {
         style={{ backgroundColor: "var(--form-background)" }}
       >
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-          {/* Logo e título */}
+          {/* LOGO E TÍTULO */}
           <div className="flex items-center gap-6">
-            <Image
-              src="/utfpr-logo.png"
-              alt="Logo UTFPR"
-              width={180}
-              height={180}
-            />
+            <Image src="/utfpr-logo.png" alt="Logo UTFPR" width={180} height={180} />
             <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md whitespace-nowrap">
               ACHADOS E PERDIDOS
             </h1>
           </div>
 
-          {/* Área de usuário */}
+          {/* ÁREA DO USUÁRIO */}
           {isAuthenticated ? (
-            <div className="flex items-center gap-4 self-center md:self-auto">
+            <div className="flex items-center gap-4">
               <Image
                 src={avatar}
                 alt="Avatar"
@@ -138,6 +116,7 @@ export default function Vitrine() {
                 className="rounded-full border-2 border-gray-500"
                 unoptimized
               />
+
               <span className="text-lg font-semibold text-gray-800">
                 Olá, {userName}!
               </span>
@@ -169,7 +148,7 @@ export default function Vitrine() {
         {renderContent()}
       </div>
 
-      {/* BOTÃO DE CADASTRAR ITEM */}
+      {/* BOTÃO FLUTUANTE */}
       <div className="fixed bottom-8 right-8">
         <Link
           href={isAuthenticated ? "/cadastro" : "/login"}

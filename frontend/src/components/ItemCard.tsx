@@ -1,30 +1,16 @@
-// src/components/ItemCard.tsx (corrigido e final)
 "use client";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { ItemAPI } from "@/types/ItemAPI";
 
-interface ItemCardProps {
-  item: {
-    id_item: number;
-    titulo: string;
-    descricao: string;
-    imagem?: string | null;
-    data_encontrado: string;
-    Categoria?: { nome: string } | null;
-    LocalEncontrado?: { nome: string } | null;
-    StatusAtual?: { descricao: string; cor_hex?: string } | null;
-  };
-}
+type Props = {
+  item: ItemAPI;
+};
 
-export default function ItemCard({ item }: ItemCardProps) {
-  // Corrige caminho da imagem (caso o backend sirva em /uploads)
-  const imageUrl =
-    item.imagem && !item.imagem.startsWith("http")
-      ? `http://localhost:4000/uploads/${item.imagem}`
-      : item.imagem || "/images/default.png";
-
-  // Formata a data
+export default function ItemCard({ item }: Props) {
   let formattedDate = "N/A";
+
   if (item.data_encontrado) {
     try {
       formattedDate = new Date(item.data_encontrado).toLocaleDateString("pt-BR", {
@@ -38,59 +24,45 @@ export default function ItemCard({ item }: ItemCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden border-2 border-gray-300 hover:shadow-xl hover:scale-105 transition-transform duration-300 ease-in-out">
-      {/* Imagem */}
-      <div className="relative w-full h-56 overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={item.titulo}
-          fill
-          unoptimized
-          className="object-cover hover:scale-110 transition-transform duration-300"
-        />
-      </div>
+    <Link href={`/item/${item.id_item}`} passHref>
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 border-4 border-gray-700 cursor-pointer">
+        <div className="p-4">
+          <h3 className="font-bold text-lg mb-2">{item.titulo}</h3>
 
-      {/* Conteúdo */}
-      <div className="p-4 flex flex-col justify-between h-56">
-        <div>
-          <h2 className="text-lg font-bold text-gray-800 truncate mb-2">
-            {item.titulo}
-          </h2>
-          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-            {item.descricao}
-          </p>
+          {/* Imagem */}
+          <div className="relative w-full h-40 mb-4 flex items-center justify-center">
+            <Image
+              src={item.imagem || "/images/default.png"}
+              alt={item.titulo}
+              width={150}
+              height={150}
+              unoptimized
+              style={{ objectFit: "contain" }}
+            />
+          </div>
 
-          {/* Categoria e Local */}
-          <p className="text-sm text-gray-700 font-medium">
-            📦 Categoria:{" "}
-            <span className="font-normal">
-              {item.Categoria?.nome || "Não informada"}
-            </span>
-          </p>
-          <p className="text-sm text-gray-700 font-medium">
-            📍 Local:{" "}
-            <span className="font-normal">
-              {item.LocalEncontrado?.nome || "Não informado"}
-            </span>
-          </p>
-        </div>
+          {/* Detalhes */}
+          <div className="text-sm text-gray-700 space-y-1">
+            <p>
+              <span className="font-semibold">Status:</span>{" "}
+              {item.StatusAtual?.descricao || "N/A"}
+            </p>
 
-        {/* Rodapé */}
-        <div className="mt-3 flex justify-between items-center">
-          <span className="text-sm text-gray-600">🗓 {formattedDate}</span>
-          {item.StatusAtual && (
-            <span
-              className="text-xs font-bold px-3 py-1 rounded-full"
-              style={{
-                backgroundColor: item.StatusAtual.cor_hex || "#4B5563",
-                color: "#fff",
-              }}
-            >
-              {item.StatusAtual.descricao}
-            </span>
-          )}
+            <p>
+              <span className="font-semibold">Descrição:</span> {item.descricao}
+            </p>
+
+            <p>
+              <span className="font-semibold">Local:</span>{" "}
+              {item.LocalEncontrado?.nome || "N/A"}
+            </p>
+
+            <p>
+              <span className="font-semibold">Data:</span> {formattedDate}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
