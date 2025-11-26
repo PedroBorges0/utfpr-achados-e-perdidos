@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,16 +10,35 @@ import { ItemAPI } from "@/types/ItemAPI";
 
 export default function Vitrine() {
   const router = useRouter();
+
   const [items, setItems] = useState<ItemAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [avatar] = useState("/default-avatar.png");
 
-  // --- CARREGAR USUÁRIO E ITENS ---
+  // --- ESTADOS DE USUÁRIO ---
+  const [userName, setUserName] = useState("Anônimo");
+  const [avatar, setAvatar] = useState("/default-avatar.png");
+
+  // --- ESTADO DE BUSCA ---
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // --- ESTADOS DE FILTROS ---
+  const [filterCategoria, setFilterCategoria] = useState("");
+  const [filterLocal, setFilterLocal] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  // --- LISTAS DE FILTRO ---
+  const [categorias, setCategorias] = useState<any[]>([]);
+  const [locais, setLocais] = useState<any[]>([]);
+  const [statusList, setStatusList] = useState<any[]>([]);
+
+  // ============================================================
+  // CARREGAMENTO INICIAL
+  // ============================================================
   useEffect(() => {
+    // Autenticação
     const token = localStorage.getItem("authToken");
     const userJson = localStorage.getItem("user");
 
@@ -27,11 +47,16 @@ export default function Vitrine() {
         const user = JSON.parse(userJson);
         setIsAuthenticated(true);
         setUserName(user.nome.split(" ")[0]);
+
+        if (user.avatar) {
+          setAvatar(user.avatar);
+        }
       } catch {
         localStorage.clear();
       }
     }
 
+    // Carregar itens
     const fetchItems = async () => {
       try {
         const response = await api.get("/itens");
@@ -45,42 +70,97 @@ export default function Vitrine() {
 
         setItems(data);
       } catch (err: any) {
-        setError("Erro ao carregar itens. Verifique o backend.");
+        setError("Erro ao carregar itens: " + err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Carregar filtros
+    const fetchFilters = async () => {
+      try {
+        const [cats, locs, stats] = await Promise.all([
+          api.get("/categorias"),
+          api.get("/localizacoes"),
+          api.get("/statusitens"),
+        ]);
+
+        setCategorias(cats.data);
+        setLocais(locs.data);
+        setStatusList(stats.data);
+      } catch (err) {
+        console.error("Erro ao carregar filtros:", err);
+      }
+    };
+
     fetchItems();
+    fetchFilters();
   }, []);
 
+  // ============================================================
+  // FILTRAGEM
+  // ============================================================
+  const applyFilters = () => {
+    let filtered = items;
+
+    if (searchQuery.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.titulo.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (filterCategoria !== "") {
+      filtered = filtered.filter(
+        (item) => item.Categoria?.nome === filterCategoria
+      );
+    }
+
+    if (filterLocal !== "") {
+      filtered = filtered.filter(
+        (item) => item.LocalEncontrado?.nome === filterLocal
+      );
+    }
+
+    if (filterStatus !== "") {
+      filtered = filtered.filter(
+        (item) => item.StatusAtual?.descricao === filterStatus
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredItems = applyFilters();
+
+  // ============================================================
   // LOGOUT
+  // ============================================================
   const handleLogout = () => {
     localStorage.clear();
     setIsAuthenticated(false);
     router.push("/login");
   };
 
-  // RENDERIZAÇÃO PRINCIPAL
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
   const renderContent = () => {
     if (isLoading)
       return <p className="text-center text-xl font-semibold">Carregando itens...</p>;
 
     if (error)
-      return (
-        <p className="text-center text-xl font-semibold text-red-500">{error}</p>
-      );
+      return <p className="text-center text-xl font-semibold text-red-500">{error}</p>;
 
-    if (items.length === 0)
+    if (filteredItems.length === 0)
       return (
         <p className="text-center text-xl font-semibold text-gray-600">
-          Nenhum item cadastrado.
+          Nenhum item encontrado.
         </p>
       );
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <ItemCard key={item.id_item} item={item} />
         ))}
       </div>
@@ -92,71 +172,157 @@ export default function Vitrine() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ backgroundColor: "var(--background)" }}
     >
-      <div
-        className="w-full max-w-7xl p-10 rounded-2xl border-4 border-gray-700 shadow-2xl"
-        style={{ backgroundColor: "var(--form-background)" }}
-      >
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-          {/* LOGO E TÍTULO */}
-          <div className="flex items-center gap-6">
-            <Image src="/utfpr-logo.png" alt="Logo UTFPR" width={180} height={180} />
-            <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md whitespace-nowrap">
-              ACHADOS E PERDIDOS
-            </h1>
+
+      {/* ======================================================= */}
+      {/* HEADER FIXO SUPERIOR */}
+      {/* ======================================================= */}
+      <div className="w-full bg-white border-b-4 border-black px-8 py-3 flex items-center justify-between gap-6 fixed top-0 left-0 z-50">
+
+        {/* Avatar + Logo */}
+        <div className="flex items-center gap-6">
+          <Image
+            src="/utfpr-logo.png"
+            alt="Logo UTFPR"
+            width={130}
+            height={130}
+          />
+
+          <div className="flex flex-col items-center">
+            <Image
+              src={avatar}
+              alt="Avatar"
+              width={48}
+              height={48}
+              className="rounded-full border border-gray-400"
+              unoptimized
+            />
+            <span className="text-md font-semibold text-gray-800 mt-1">
+              {userName}
+            </span>
+          </div>
+        </div>
+
+        {/* Barra de Busca */}
+        <div className="flex items-center gap-3">
+
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar item..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 border border-gray-400 rounded-full w-64 focus:outline-none"
+            />
+            <button className="absolute right-3 top-1/2 -translate-y-1/2">
+              🔍
+            </button>
           </div>
 
-          {/* ÁREA DO USUÁRIO */}
+          {/* Filtros */}
+          <select
+            value={filterCategoria}
+            onChange={(e) => setFilterCategoria(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Categoria</option>
+            {categorias.map((c: any) => (
+              <option key={c.id_categoria} value={c.nome}>
+                {c.nome}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterLocal}
+            onChange={(e) => setFilterLocal(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Local</option>
+            {locais.map((l: any) => (
+              <option key={l.id_localizacao} value={l.nome}>
+                {l.nome}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="border border-gray-400 rounded-full px-3 py-2 bg-white"
+          >
+            <option value="">Status</option>
+            {statusList.map((s: any) => (
+              <option key={s.id_status} value={s.descricao}>
+                {s.descricao}
+              </option>
+            ))}
+          </select>
+
+        </div>
+
+        {/* Ações de usuário */}
+        <div className="flex items-center gap-6">
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
-              <Image
-                src={avatar}
-                alt="Avatar"
-                width={48}
-                height={48}
-                className="rounded-full border-2 border-gray-500"
-                unoptimized
-              />
-
-              <span className="text-lg font-semibold text-gray-800">
-                Olá, {userName}!
-              </span>
-
+            <>
               <Link
                 href="/perfil"
-                className="bg-black text-white font-semibold px-6 py-2 rounded-full hover:bg-gray-800 transition-colors shadow-md"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
               >
                 Ver Perfil
               </Link>
 
+              <Link
+                href="/cadastro"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Cadastrar item
+              </Link>
+
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white font-semibold px-6 py-2 rounded-full hover:bg-red-700 transition-colors shadow-md"
+                className="bg-red-600 text-white font-semibold px-5 py-2 rounded-full hover:bg-red-700 transition"
               >
                 Sair
               </button>
-            </div>
+            </>
           ) : (
-            <Link
-              href="/login"
-              className="bg-gray-800 text-white font-bold text-md px-8 py-3 rounded-full shadow-lg hover:bg-black transition-colors"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                href="/cadastro"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Cadastrar item
+              </Link>
+
+              <Link
+                href="/login"
+                className="text-black font-semibold hover:border-b-2 hover:border-black pb-1 transition"
+              >
+                Login
+              </Link>
+            </>
           )}
+        </div>
+      </div>
+
+      {/* ============================================================== */}
+      {/* CONTEÚDO PRINCIPAL */}
+      {/* ============================================================== */}
+      <div
+        className="w-full max-w-7xl p-0 rounded-2xl border-4 border-gray-700 shadow-2xl overflow-hidden mt-40"
+        style={{ backgroundColor: "var(--form-background)" }}
+      >
+        <header className="w-full flex items-center justify-center px-10 py-10">
+          <h1 className="text-5xl font-bold text-black bg-yellow-400 py-3 px-10 rounded-xl shadow-md">
+            ACHADOS E PERDIDOS
+          </h1>
         </header>
 
-        {renderContent()}
+        <div className="px-10 pb-10">
+          {renderContent()}
+        </div>
       </div>
 
-      {/* BOTÃO FLUTUANTE */}
-      <div className="fixed bottom-8 right-8">
-        <Link
-          href={isAuthenticated ? "/cadastro" : "/login"}
-          className="bg-black text-white font-semibold text-lg px-8 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-all"
-        >
-          Cadastrar um item
-        </Link>
-      </div>
     </main>
   );
 }
