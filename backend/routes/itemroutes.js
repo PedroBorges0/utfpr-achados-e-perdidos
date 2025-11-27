@@ -1,11 +1,10 @@
-// backend/routes/itemRoutes.js — versão final com upload e status funcionando
+// backend/routes/itemRoutes.js 
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 
-// Configuração do multer para salvar imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../uploads'));
@@ -18,25 +17,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --- Importação dos Modelos ---
 const Item = require('../models/Item');
 const Usuario = require('../models/Usuario');
 const Categoria = require('../models/Categoria');
 const Localizacao = require('../models/Localizacao');
 const StatusItem = require('../models/StatusItem');
 
-// =========================================================
-// ROTA 1: CRIAR NOVO ITEM (POST - PROTEGIDA)
-// =========================================================
-// POST /api/itens
+
 router.post('/', auth, upload.single('imagem'), async (req, res) => {
   try {
-    console.log('📦 BODY RECEBIDO:', req.body);
-    console.log('📎 FILE RECEBIDO:', req.file);
-
     const idUsuarioLogado = req.usuario.id;
 
-    // Dados vindos do FormData
     const {
       titulo,
       descricao,
@@ -47,15 +38,12 @@ router.post('/', auth, upload.single('imagem'), async (req, res) => {
       data_encontrado,
     } = req.body;
 
-    // Verificação básica
     if (!titulo || !descricao || !id_categoria || !id_localizacao_encontrado || !id_status) {
-      return res.status(400).json({ msg: 'Campos obrigatórios ausentes no formulário.' });
+      return res.status(400).json({ msg: 'Campos obrigatórios ausentes.' });
     }
 
-    // Caminho da imagem, se enviada
     const imagem = req.file ? req.file.filename : null;
 
-    // Criação do item
     const novoItem = await Item.create({
       titulo,
       descricao,
@@ -70,25 +58,15 @@ router.post('/', auth, upload.single('imagem'), async (req, res) => {
 
     res.status(201).json({
       msg: 'Item registrado com sucesso!',
-      item: {
-        id_item: novoItem.id_item,
-        titulo: novoItem.titulo,
-        data_encontrado: novoItem.data_encontrado,
-        imagem: novoItem.imagem,
-      },
+      item: novoItem,
     });
   } catch (err) {
-    console.error('❌ Erro ao registrar item:', err);
-    res.status(500).json({
-      msg: 'Erro no servidor ao registrar item.',
-      details: err.message,
-    });
+    console.error(' Erro ao registrar item:', err);
+    res.status(500).json({ msg: 'Erro no servidor.' });
   }
 });
 
-// =========================================================
-// ROTA 2: BUSCAR ITENS DO USUÁRIO LOGADO (GET /meus-itens)
-// =========================================================
+
 router.get('/meus-itens', auth, async (req, res) => {
   try {
     const idUsuarioLogado = req.usuario.id;
@@ -100,19 +78,18 @@ router.get('/meus-itens', auth, async (req, res) => {
         { model: Categoria, as: 'Categoria', attributes: ['nome'] },
         { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
         { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
+        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email', 'telefone'] },
       ],
     });
 
     res.status(200).json(meusItens);
   } catch (err) {
-    console.error('Erro ao buscar meus itens:', err);
-    res.status(500).json({ msg: 'Erro ao buscar seus itens.', details: err.message });
+    console.error(' Erro ao buscar meus itens:', err);
+    res.status(500).json({ msg: 'Erro ao buscar seus itens.' });
   }
 });
 
-// =========================================================
-// ROTA 3: LISTAR TODOS OS ITENS (GET - PÚBLICA)
-// =========================================================
+
 router.get('/', async (req, res) => {
   try {
     const itens = await Item.findAll({
@@ -121,30 +98,26 @@ router.get('/', async (req, res) => {
         { model: Categoria, as: 'Categoria', attributes: ['nome'] },
         { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
         { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
-        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] },
+        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email', 'telefone'] },
       ],
     });
 
     res.status(200).json(itens);
   } catch (err) {
-    console.error('Erro ao listar itens:', err);
-    res.status(500).json({ msg: 'Erro no servidor ao listar itens.', details: err.message });
+    console.error(' Erro ao listar itens:', err);
+    res.status(500).json({ msg: 'Erro no servidor.' });
   }
 });
 
-// =========================================================
-// ROTA 4: BUSCAR ITEM POR ID (GET - PÚBLICA)
-// =========================================================
+
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const item = await Item.findByPk(id, {
+    const item = await Item.findByPk(req.params.id, {
       include: [
         { model: Categoria, as: 'Categoria', attributes: ['nome'] },
         { model: Localizacao, as: 'LocalEncontrado', attributes: ['nome'] },
         { model: StatusItem, as: 'StatusAtual', attributes: ['descricao', 'cor_hex'] },
-        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email'] },
+        { model: Usuario, as: 'CadastradoPor', attributes: ['nome', 'email', 'telefone'] },
       ],
     });
 
@@ -152,8 +125,8 @@ router.get('/:id', async (req, res) => {
 
     res.status(200).json(item);
   } catch (err) {
-    console.error(`Erro ao buscar item ${req.params.id}:`, err);
-    res.status(500).json({ msg: 'Erro no servidor ao buscar item.' });
+    console.error(' Erro ao buscar item:', err);
+    res.status(500).json({ msg: 'Erro no servidor.' });
   }
 });
 
