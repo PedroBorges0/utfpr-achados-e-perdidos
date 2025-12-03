@@ -1,23 +1,19 @@
-// backend/routes/itemRoutes.js (VERSÃO FINAL COM UPLOAD, DELETE, E ORDENAÇÃO)
 
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs'); // Módulo para manipulação de arquivos (para deletar imagem)
+const fs = require('fs'); 
 
-// --- Importação dos Modelos ---
 const Item = require('../models/Item');
 const Usuario = require('../models/Usuario');
 const Categoria = require('../models/Categoria');
 const Localizacao = require('../models/Localizacao');
 const StatusItem = require('../models/StatusItem');
 
-// --- Configuração do Multer (Upload de Imagens) ---
 const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
-// Garante que o diretório 'uploads' exista
 if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR);
 }
@@ -35,15 +31,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
-// =========================================================
-// ROTA 1: CRIAR NOVO ITEM (POST - PROTEGIDA - COM UPLOAD)
-// =========================================================
-// POST /api/itens
 router.post('/', auth, upload.single('imagem'), async (req, res) => {
     try {
         const idUsuarioLogado = req.usuario.id;
 
-        // Dados vindos do FormData (req.body)
+        
         const {
             titulo,
             descricao,
@@ -54,23 +46,21 @@ router.post('/', auth, upload.single('imagem'), async (req, res) => {
             data_encontrado,
         } = req.body;
 
-        // Caminho da imagem, se enviada (req.file)
+        
         const imagem = req.file ? req.file.filename : null;
 
-        // Verificação básica (campos devem ser Strings, mesmo que vazias no Frontend)
+        
         if (!titulo || !descricao || !id_categoria || !id_localizacao_encontrado || !id_status) {
-            // Se o upload ocorreu, mas a validação falhou, deleta o arquivo
             if (imagem) fs.unlinkSync(path.join(UPLOADS_DIR, imagem)); 
             return res.status(400).json({ msg: 'Campos obrigatórios ausentes no formulário.' });
         }
 
-        // Criação do item
         const novoItem = await Item.create({
             titulo,
             descricao,
             caracteristicas,
-            id_categoria: parseInt(id_categoria), // Garante que seja number
-            id_localizacao_encontrado: parseInt(id_localizacao_encontrado), // Garante que seja number
+            id_categoria: parseInt(id_categoria), 
+            id_localizacao_encontrado: parseInt(id_localizacao_encontrado), 
             id_usuario_cadastrou: idUsuarioLogado,
             id_status: parseInt(id_status),
             data_encontrado,
@@ -82,7 +72,6 @@ router.post('/', auth, upload.single('imagem'), async (req, res) => {
             item: { id_item: novoItem.id_item, titulo: novoItem.titulo, imagem: novoItem.imagem },
         });
     } catch (err) {
-        // Se a falha for no DB (FK), o arquivo deve ser deletado
         if (req.file) fs.unlinkSync(path.join(UPLOADS_DIR, req.file.filename));
         console.error('❌ Erro ao registrar item:', err);
         res.status(500).json({
@@ -93,10 +82,6 @@ router.post('/', auth, upload.single('imagem'), async (req, res) => {
 });
 
 
-// =========================================================
-// ROTA 2: BUSCAR ITENS DO USUÁRIO LOGADO (GET /meus-itens - PROTEGIDA)
-// Colocada em primeiro para evitar conflito com /:id
-// =========================================================
 router.get('/meus-itens', auth, async (req, res) => {
     try {
         const idUsuarioLogado = req.usuario.id;
@@ -119,9 +104,6 @@ router.get('/meus-itens', auth, async (req, res) => {
 });
 
 
-// =========================================================
-// ROTA 3: LISTAR TODOS OS ITENS (GET / - PÚBLICA)
-// =========================================================
 router.get('/', async (req, res) => {
     try {
         const itens = await Item.findAll({
@@ -142,9 +124,6 @@ router.get('/', async (req, res) => {
 });
 
 
-// =========================================================
-// ROTA 4: BUSCAR ITEM POR ID (GET /:id - PÚBLICA)
-// =========================================================
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -168,33 +147,26 @@ router.get('/:id', async (req, res) => {
 });
 
 
-// =========================================================
-// ROTA 5: ATUALIZAR UM ITEM (PUT - PROTEGIDA)
-// =========================================================
 router.put('/:id', auth, upload.single('imagem'), async (req, res) => {
     try {
         const { id } = req.params;
         const idUsuarioLogado = req.usuario.id;
         
-        // Dados do corpo e caminho da imagem
         const { titulo, descricao, id_categoria, id_localizacao_encontrado, id_status } = req.body;
         const novaImagem = req.file ? req.file.filename : null;
 
         const item = await Item.findByPk(id);
 
         if (!item) {
-            // Se o upload falhou, deleta o arquivo
             if (novaImagem) fs.unlinkSync(path.join(UPLOADS_DIR, novaImagem));
             return res.status(404).json({ msg: 'Item não encontrado.' });
         }
 
         if (item.id_usuario_cadastrou !== idUsuarioLogado) {
-            // Se o upload falhou, deleta o arquivo
             if (novaImagem) fs.unlinkSync(path.join(UPLOADS_DIR, novaImagem));
             return res.status(403).json({ msg: 'Acesso negado. Você só pode atualizar itens que você cadastrou.' });
         }
         
-        // Se uma nova imagem foi enviada, deleta a antiga
         if (novaImagem && item.imagem) {
             const oldImagePath = path.join(UPLOADS_DIR, item.imagem);
             if (fs.existsSync(oldImagePath)) {
@@ -202,13 +174,13 @@ router.put('/:id', auth, upload.single('imagem'), async (req, res) => {
             }
         }
         
-        // Prepara os dados para atualização (inclui a nova imagem ou mantém a antiga se nenhuma nova for enviada)
+       
         const dadosAtualizados = {
             ...req.body,
             id_categoria: parseInt(id_categoria),
             id_localizacao_encontrado: parseInt(id_localizacao_encontrado),
             id_status: parseInt(id_status),
-            imagem: novaImagem || item.imagem, // Usa a nova ou mantém a antiga
+            imagem: novaImagem || item.imagem, 
         };
 
         await item.update(dadosAtualizados);
@@ -222,9 +194,7 @@ router.put('/:id', auth, upload.single('imagem'), async (req, res) => {
 });
 
 
-// =========================================================
-// ROTA 6: DELETAR UM ITEM (DELETE - PROTEGIDA)
-// =========================================================
+
 router.delete('/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -238,7 +208,7 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(403).json({ msg: 'Acesso negado. Você só pode deletar itens que você cadastrou.' });
         }
         
-        // Deleta o arquivo de imagem do servidor antes de deletar o registro do BD
+        
         if (item.imagem) {
             const imagePath = path.join(UPLOADS_DIR, item.imagem);
             if (fs.existsSync(imagePath)) {

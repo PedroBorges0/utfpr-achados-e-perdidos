@@ -1,24 +1,24 @@
-// backend/models/Categoria.js (CÓDIGO FINAL CORRIGIDO)
+
 
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/database');
 
 const Categoria = sequelize.define('Categoria', {
-    id_categoria: { // Chave Primária correta
+    id_categoria: { 
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
     },
-    nome: { // <<< DEFINIÇÃO CORRIGIDA
+    nome: { 
         type: DataTypes.STRING(100),
         allowNull: false,
         unique: true
     },
-    descricao: { // <<< DEFINIÇÃO CORRIGIDA
+    descricao: { 
         type: DataTypes.TEXT,
     },
     
-    // CORREÇÃO PARA O TRIGGER SQL: Colunas explícitas (necessário para o seu BD)
+    
     created_at: { 
         type: DataTypes.DATE, 
         allowNull: false, 
@@ -31,9 +31,9 @@ const Categoria = sequelize.define('Categoria', {
     },
 }, {
     tableName: 'categorias',
-    timestamps: false, // O SQL gerencia a atualização
+    timestamps: false, 
     freezeTableName: true,
-    primaryKey: 'id_categoria', // GARANTIA DE PK CORRETA
+    primaryKey: 'id_categoria', 
 });
 
 module.exports = Categoria;

@@ -1,13 +1,12 @@
 // backend/routes/localizacaoRoutes.js
 const express = require('express');
 const router = express.Router();
-const Localizacao = require('../models/Localizacao'); // Importa o Modelo Localizacao
+const Localizacao = require('../models/Localizacao'); 
 
-// Rota pública para listar todas as localizações
-// GET /api/localizacoes
+
 router.get('/', async (req, res) => {
     try {
-        // Busca todos os registros, selecionando apenas o ID e o Nome
+        
         const localizacoes = await Localizacao.findAll({ 
             attributes: ['id_localizacao', 'nome'], 
             order: [['nome', 'ASC']] 

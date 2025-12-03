@@ -18,16 +18,16 @@ const Usuario = sequelize.define('Usuario', {
         defaultValue: 'aluno',
     },
     ativo: { type: DataTypes.BOOLEAN, defaultValue: true },
-    avatar_url: { type: DataTypes.STRING, allowNull: true }, // NOVO CAMPO
+    avatar_url: { type: DataTypes.STRING, allowNull: true }, 
     
-    // CORREÇÃO PARA O TRIGGER SQL: Colunas explícitas
+    
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
 }, {
     tableName: 'usuarios',
     timestamps: false,
     freezeTableName: true,
-    primaryKey: 'id_usuario', // GARANTIA DE PK CORRETA
+    primaryKey: 'id_usuario', 
 });
 
 module.exports = Usuario;

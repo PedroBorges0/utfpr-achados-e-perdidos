@@ -21,7 +21,7 @@ export const InputGroup: React.FC<{ label: string; name: string; value: string; 
             onChange={onChange}
             disabled={disabled}
             placeholder={placeholder}
-            autocomplete={autocomplete}
+            autoComplete={autocomplete}
             className="w-full bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-300 disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-400"
         />
     </div>

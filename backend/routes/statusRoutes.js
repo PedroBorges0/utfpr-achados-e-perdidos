@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const StatusItem = require('../models/StatusItem');
 
-// GET /api/statusitens
 router.get('/', async (req, res) => {
   try {
     const status = await StatusItem.findAll({

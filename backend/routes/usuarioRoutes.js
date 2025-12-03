@@ -6,11 +6,11 @@
     const Usuario = require('../models/Usuario');
     const auth = require('../middleware/auth'); 
 
-    // --- IMPORTS PARA UPLOAD ---
+    
     const multer = require('multer'); 
     const path = require('path');
     const fs = require('fs');
-    // ---------------------------
+    
 
     const router = express.Router();
 
@@ -21,7 +21,7 @@
         fs.mkdirSync(UPLOADS_DIR, { recursive: true });
     }
 
-    // Configuração do Multer (Armazenamento fora do escopo da rota)
+    
     const storage = multer.diskStorage({
         destination: (req, file, cb) => { cb(null, UPLOADS_DIR); },
         filename: (req, file, cb) => {
@@ -33,11 +33,6 @@
     const upload = multer({ storage });
 
 
-    // =========================================================
-    // ROTAS DE AUTENTICAÇÃO E PERFIL
-    // =========================================================
-
-    // ROTA 1: CADASTRO DE USUÁRIO (POST)
     router.post('/cadastro', async (req, res) => {
         try {
             const { nome, email, senha } = req.body;
@@ -54,7 +49,7 @@
     });
 
 
-    // ROTA 2: LOGIN DE USUÁRIO (POST - GERA TOKEN)
+    
     router.post('/login', async (req, res) => {
         try {
             const { email, senha } = req.body;
@@ -78,7 +73,7 @@
     });
 
 
-    // ROTA 3: BUSCAR PERFIL LOGADO (GET /me)
+    
     router.get('/me', auth, async (req, res) => {
         try {
             const idUsuarioLogado = req.usuario.id; 
@@ -94,7 +89,7 @@
     });
 
 
-    // ROTA 4: ATUALIZAR PERFIL DO USUÁRIO LOGADO (PUT /me - CRÍTICA)
+    
     router.put('/me', auth, upload.single('avatar'), async (req, res) => { 
         try {
             const idUsuarioLogado = req.usuario.id; 
@@ -110,20 +105,20 @@
             
             const dadosAtualizados = {};
             
-            // 1. Nome e Email: Só atualiza se a string não for vazia (protege NOT NULL)
+            
             if (nome && nome.trim() !== '') dadosAtualizados.nome = nome;
             if (email && email.trim() !== '') dadosAtualizados.email = email;
             
-            // 2. Telefone: Permite string vazia para o usuário poder limpar o campo
+            
             if (telefone || telefone === '') dadosAtualizados.telefone = telefone; 
             
-            // 3. Lógica para Senha
+            
             if (senha) {
                 const salt = await bcrypt.genSalt(10);
                 dadosAtualizados.senha = await bcrypt.hash(senha, salt);
             }
             
-            // 4. Lógica para Avatar
+            
             if (novoAvatar) {
                 if (usuario.avatar_url && fs.existsSync(path.join(UPLOADS_DIR, usuario.avatar_url))) {
                     fs.unlinkSync(path.join(UPLOADS_DIR, usuario.avatar_url));
@@ -133,7 +128,7 @@
 
             await usuario.update(dadosAtualizados);
 
-            // Retorna o novo perfil
+            
             const perfilAtualizado = {
                 id_usuario: usuario.id_usuario, nome: usuario.nome, email: usuario.email,
                 telefone: usuario.telefone, avatar_url: usuario.avatar_url,

@@ -6,16 +6,7 @@ import api from "@/services/api";
 import ItemCard from "@/components/ItemCard";
 import { useRouter } from "next/navigation";
 
-interface ItemAPI {
-  id_item: number;
-  titulo: string;
-  descricao: string;
-  data_encontrado: string;
-  Categoria?: { nome: string };
-  LocalEncontrado?: { nome: string };
-  StatusAtual?: { descricao: string; cor_hex?: string };
-  imagem?: string;
-}
+import type { ItemAPI } from "@/types/ItemAPI";
 
 export default function Vitrine() {
   const router = useRouter();
@@ -56,12 +47,13 @@ export default function Vitrine() {
     const fetchItems = async () => {
       try {
         const response = await api.get("/itens");
-        const data = response.data.map((item: ItemAPI) => ({
+        const data: ItemAPI[] = response.data.map((item: any) => ({
           ...item,
           imagem: item.imagem
             ? `http://localhost:4000/uploads/${item.imagem}`
             : "/images/default.png",
         }));
+
         setItems(data);
       } catch (err: any) {
         setError("Erro ao carregar itens: " + err.message);
@@ -75,7 +67,7 @@ export default function Vitrine() {
         const [cats, locs, stats] = await Promise.all([
           api.get("/categorias"),
           api.get("/localizacoes"),
-          api.get("/statusitens"), 
+          api.get("/statusitens"),
         ]);
 
         setCategorias(cats.data);
@@ -133,7 +125,11 @@ export default function Vitrine() {
       return <p className="text-center text-xl font-semibold">Carregando itens...</p>;
 
     if (error)
-      return <p className="text-center text-xl font-semibold text-red-500">{error}</p>;
+      return (
+        <p className="text-center text-xl font-semibold text-red-500">
+          {error}
+        </p>
+      );
 
     if (filteredItems.length === 0)
       return (
@@ -156,16 +152,9 @@ export default function Vitrine() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{ backgroundColor: "var(--background)" }}
     >
-
       <div className="w-full bg-white border-b-4 border-black px-8 py-3 flex items-center justify-between gap-6 fixed top-0 left-0 z-50">
-
         <div className="flex items-center gap-6">
-          <Image
-            src="/utfpr-logo.png"
-            alt="Logo UTFPR"
-            width={130}
-            height={130}
-          />
+          <Image src="/utfpr-logo.png" alt="Logo UTFPR" width={130} height={130} />
 
           <div className="flex flex-col items-center">
             <Image
@@ -183,7 +172,6 @@ export default function Vitrine() {
         </div>
 
         <div className="flex items-center gap-3">
-
           <div className="relative">
             <input
               type="text"
@@ -192,9 +180,7 @@ export default function Vitrine() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="px-4 py-2 border border-gray-400 rounded-full w-64 focus:outline-none"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2">
-              🔍
-            </button>
+            <button className="absolute right-3 top-1/2 -translate-y-1/2">🔍</button>
           </div>
 
           <select
@@ -235,7 +221,6 @@ export default function Vitrine() {
               </option>
             ))}
           </select>
-
         </div>
 
         <div className="flex items-center gap-6">

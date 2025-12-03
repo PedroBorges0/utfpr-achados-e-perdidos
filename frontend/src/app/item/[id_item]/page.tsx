@@ -1,13 +1,11 @@
-// src/app/item/[id_item]/page.tsx (CÓDIGO FINAL COM USECALLBACK)
 "use client";
-import { useState, useEffect, useCallback } from 'react'; // <-- ADICIONADO useCallback
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import api from '@/services/api';
 import Head from 'next/head';
 
-// Definição do Tipo do Item (ajustado para a rota de detalhes)
 interface ItemDetalhe {
     id_item: number;
     titulo: string;
@@ -15,9 +13,8 @@ interface ItemDetalhe {
     data_encontrado: string;
     caracteristicas: string | null;
     imagem: string | null;
-    id_usuario_cadastrou: number; // Chave para checar a autoria
+    id_usuario_cadastrou: number; 
     
-    // Relações
     CadastradoPor: { nome: string; email: string; telefone: string | null; } | null;
     Categoria: { nome: string } | null;
     LocalEncontrado: { nome: string } | null;
@@ -42,7 +39,6 @@ export default function ItemDetailPage() {
         const userJson = localStorage.getItem('user');
         let currentUserId: number | null = null;
 
-        // 1. Busca o ID do usuário logado do localStorage
         if (userJson) {
             try {
                 const user = JSON.parse(userJson);
@@ -60,14 +56,14 @@ export default function ItemDetailPage() {
                 });
                 const itemData: ItemDetalhe = response.data;
                 
-                // Formatação da URL da imagem
+        
                 if (itemData.imagem && !itemData.imagem.startsWith('http')) {
                     itemData.imagem = `http://localhost:3001/uploads/${itemData.imagem}`;
                 }
 
                 setItem(itemData);
 
-                // 2. CHECAGEM DE AUTORIA
+            
                 if (currentUserId !== null && itemData.id_usuario_cadastrou === currentUserId) {
                     setIsOwner(true);
                 }
@@ -80,13 +76,12 @@ export default function ItemDetailPage() {
         };
         
         fetchItem();
-    }, [idItem, router]); // Dependências corrigidas
+    }, [idItem, router]); 
 
 
-    // --- FUNÇÕES DE AÇÃO (USANDO USECALLBACK PARA GARANTIR ESTABILIDADE) ---
+
 
     const handleDelete = useCallback(async () => {
-        // Ponto de controle: O usuário tem que clicar em OK e ser o dono
         if (!confirm("Tem certeza que deseja EXCLUIR este item? Esta ação é irreversível.")) {
             return;
         }
@@ -97,34 +92,30 @@ export default function ItemDetailPage() {
             return;
         }
         
-        // Se a função for chamada e isOwner for false (o que não deve acontecer se o botão for visível)
         if (!isOwner) {
             alert("Acesso negado. Você não é o dono deste item.");
             return;
         }
 
         try {
-            // Chamada para a rota protegida DELETE
             await api.delete(`/itens/${idItem}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
             alert(`Item "${item?.titulo}" excluído com sucesso.`);
-            router.push('/perfil'); // Redireciona para o perfil após a exclusão
+            router.push('/perfil'); 
 
         } catch (err: any) {
-            // Se der 403 Forbidden ou 500, o Backend falhou
             console.error("Erro completo na API DELETE:", err);
             alert("Falha ao excluir item: " + (err.response?.data?.msg || "Erro de servidor."));
         }
-    }, [idItem, isOwner, item, router]); // Dependências
+    }, [idItem, isOwner, item, router]); 
 
 
     const handleEditRedirect = useCallback(() => {
         router.push(`/cadastro?itemId=${idItem}`); 
     }, [idItem, router]);
 
-    // --- RENDERIZAÇÃO ---
 
     if (isLoading) {
         return <main className="min-h-screen flex items-center justify-center p-4">Carregando detalhes do item...</main>;
@@ -139,7 +130,6 @@ export default function ItemDetailPage() {
         );
     }
     
-    // Formatação da Data e Dados do Dono (CadastradoPor)
     const formattedDate = new Date(item.data_encontrado).toLocaleDateString('pt-BR');
     const imageSource = item.imagem || '/default-item-placeholder.png'; 
     
@@ -165,10 +155,10 @@ export default function ItemDetailPage() {
                     <h1 className="text-4xl font-bold text-black bg-yellow-400 py-2 px-6 rounded-xl shadow-md">
                         {item.titulo}
                     </h1>
-                    <div className="w-20"></div> {/* Espaçador */}
+                    <div className="w-20"></div> 
                 </header>
                 
-                {/* BOTÕES DE AÇÃO (EXIBIDOS APENAS SE FOR O DONO) */}
+            
                 {isOwner && (
                     <div className="flex justify-end space-x-3 mb-6">
                         <button
@@ -187,7 +177,7 @@ export default function ItemDetailPage() {
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Coluna da Imagem */}
+                    
                     <div className="flex flex-col items-center">
                         <h2 className="text-xl font-bold mb-4">Imagem do Item</h2>
                         <div className="relative w-full max-w-xs h-72 border-2 border-gray-400 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
@@ -202,7 +192,7 @@ export default function ItemDetailPage() {
                         </div>
                     </div>
                     
-                    {/* Coluna dos Detalhes */}
+                    
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold mb-4">Detalhes</h2>
                         
@@ -220,7 +210,7 @@ export default function ItemDetailPage() {
                             <DetailRow label="Telefone de Contato" value={telefoneDono} />
                         </div>
                         
-                        {/* BOTÃO CONDICIONAL: Tenho Informações (Se não for o dono) */}
+                        
                         {!isOwner && (item.StatusAtual?.descricao === 'Ativo' || item.StatusAtual?.descricao === 'Pendente') && (
                             <button className="mt-6 w-full bg-green-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:bg-green-700 transition-colors">
                                 Tenho Informações Sobre Este Item
@@ -233,7 +223,6 @@ export default function ItemDetailPage() {
     );
 }
 
-// Componente auxiliar para formatar linhas de detalhe
 const DetailRow: React.FC<{ label: string; value: string | null }> = ({ label, value }) => (
     <div className="p-3 bg-gray-100 rounded-md shadow-sm">
         <p className="font-semibold text-gray-800">{label}:</p>

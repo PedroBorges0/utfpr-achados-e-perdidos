@@ -13,11 +13,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados de validação individual
   const [emailError, setEmailError] = useState<string | null>(null);
   const [senhaError, setSenhaError] = useState<string | null>(null);
 
-  // Função para validar email
+
   const validarEmail = (email: string) => {
     return /\S+@\S+\.\S+/.test(email);
   };
@@ -30,7 +29,6 @@ export default function LoginPage() {
 
     let hasError = false;
 
-    // Validação dos campos
     if (!email) {
       setEmailError("*Campo obrigatório");
       hasError = true;
@@ -49,7 +47,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Chamada para o backend
       const response = await api.post("/usuarios/login", {
         email,
         senha,
@@ -57,14 +54,12 @@ export default function LoginPage() {
 
       const { token, usuario } = response.data;
 
-      // Armazena dados do usuário
       localStorage.setItem("authToken", token);
       localStorage.setItem("user", JSON.stringify(usuario));
 
       alert(`Bem-vindo, ${usuario.nome}! Login bem-sucedido.`);
-      router.push("/"); // Redireciona para a página principal
+      router.push("/");
     } catch (err: any) {
-      // Se o backend retornar erro 404 ou similar
       const msg =
         err.response?.data?.msg === "Usuário não encontrado"
           ? "Usuário Inexistente"

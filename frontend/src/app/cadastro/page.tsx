@@ -1,4 +1,3 @@
-// src/app/cadastro/page.tsx (VERSÃO FINAL UNIFICADA)
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -14,9 +13,9 @@ export default function CadastroPage() {
     titulo: "",
     descricao: "",
     caracteristicas: "",
-    id_categoria: "", // ID como string do select
-    id_localizacao_encontrado: "", // ID como string do select
-    id_status: "1", // padrão Achado (ID 1)
+    id_categoria: "", 
+    id_localizacao_encontrado: "", 
+    id_status: "1", 
     data_encontrado: new Date().toISOString().split("T")[0],
   });
 
@@ -28,7 +27,7 @@ export default function CadastroPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
-  // --- CARREGAR CATEGORIAS, LOCALIZAÇÕES E STATUS ---
+ 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
@@ -38,7 +37,7 @@ export default function CadastroPage() {
 
     const fetchSeeds = async () => {
       try {
-        // Rotas que você criou no Backend
+        
         const [catRes, localRes, statusRes] = await Promise.all([
           api.get("/categorias"),
           api.get("/localizacoes"),
@@ -58,7 +57,7 @@ export default function CadastroPage() {
     fetchSeeds();
   }, [router]);
 
-  // --- INPUT GENÉRICO (para todos os campos) ---
+  
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -68,7 +67,7 @@ export default function CadastroPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // --- IMAGEM ---
+  
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -77,13 +76,13 @@ export default function CadastroPage() {
     }
   };
 
-  // --- VALIDAÇÃO ÚNICA E CORRIGIDA ---
+  
   const validate = () => {
     let tempErrors: any = {};
     if (!formData.titulo) tempErrors.titulo = true;
     if (!formData.descricao) tempErrors.descricao = true;
     
-    // Verifica se os campos de SELECT (que devem ser IDs) estão vazios
+    
     if (!formData.id_categoria || formData.id_categoria === "") tempErrors.id_categoria = true;
     if (!formData.id_localizacao_encontrado || formData.id_localizacao_encontrado === "") tempErrors.id_localizacao_encontrado = true;
     if (!formData.id_status || formData.id_status === "") tempErrors.id_status = true;
@@ -92,7 +91,7 @@ export default function CadastroPage() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  // --- SUBMIT FINAL ---
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
@@ -102,7 +101,7 @@ export default function CadastroPage() {
 
     const token = localStorage.getItem("authToken");
 
-    // 1. VERIFICAÇÃO DE TOKEN: (401)
+    
     if (!token) {
       alert("Sessão expirada. Faça login novamente.");
       router.push("/login");
@@ -110,7 +109,7 @@ export default function CadastroPage() {
     }
 
     try {
-      // 2. PREPARAÇÃO DO PAYLOAD (Conversão para Number)
+      
       const payload = {
         titulo: formData.titulo,
         descricao: formData.descricao,
@@ -121,15 +120,15 @@ export default function CadastroPage() {
         data_encontrado: formData.data_encontrado || new Date().toISOString().split("T")[0],
       };
 
-      // 3. CHAMADA API: Envio do Token e do Payload
+      
       const response = await api.post("/itens", payload, {
         headers: {
-          Authorization: `Bearer ${token}`, // Envia o token
+          Authorization: `Bearer ${token}`, 
         },
       });
 
       alert(`Item '${response.data.item.titulo}' cadastrado com sucesso!`);
-      router.push("/"); // Redireciona para a vitrine
+      router.push("/"); 
     } catch (err: any) {
       const msg =
         err.response?.data?.details ||
@@ -159,7 +158,7 @@ export default function CadastroPage() {
           className="w-full max-w-5xl p-10 rounded-2xl border-4 border-gray-700 flex flex-col items-center relative bg-white shadow-2xl"
           style={{ backgroundColor: "var(--form-background)" }}
         >
-          {/* BOTÃO DE VOLTAR */}
+          
           <Link
             href="/"
             className="absolute top-4 left-4 bg-gray-800 text-white font-bold px-4 py-2 rounded-full shadow-md hover:bg-black transition-colors"
@@ -185,7 +184,7 @@ export default function CadastroPage() {
             className="w-full grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4"
           >
             <div className="flex flex-col gap-3">
-              {/* TÍTULO */}
+              
               <div>
                 <input
                   type="text"
@@ -202,7 +201,7 @@ export default function CadastroPage() {
                 )}
               </div>
 
-              {/* DESCRIÇÃO */}
+              
               <div>
                 <textarea
                   name="descricao"
@@ -219,7 +218,7 @@ export default function CadastroPage() {
                 )}
               </div>
 
-              {/* CARACTERÍSTICAS */}
+              
               <div>
                 <textarea
                   name="caracteristicas"
@@ -231,7 +230,7 @@ export default function CadastroPage() {
                 />
               </div>
 
-              {/* DATA */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Data encontrado/perdido:
@@ -245,7 +244,7 @@ export default function CadastroPage() {
                 />
               </div>
 
-              {/* CATEGORIA */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Selecione a Categoria:
@@ -270,7 +269,7 @@ export default function CadastroPage() {
                 )}
               </div>
 
-              {/* LOCALIZAÇÃO */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Local que foi encontrado/perdido:
@@ -297,7 +296,7 @@ export default function CadastroPage() {
                 )}
               </div>
 
-              {/* STATUS */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status:
@@ -322,7 +321,7 @@ export default function CadastroPage() {
                 )}
               </div>
 
-              {/* BOTÃO */}
+              
               <button
                 type="submit"
                 className="w-full mt-4 bg-yellow-400 text-yellow-900 font-bold px-6 py-2 rounded-full hover:bg-yellow-500 transition-colors shadow-md"
@@ -331,7 +330,7 @@ export default function CadastroPage() {
               </button>
             </div>
 
-            {/* BLOCO DE IMAGEM */}
+            
             <div className="flex flex-col items-center justify-center pt-8">
               <p className="font-semibold text-gray-700 mb-2">
                 Anexe uma imagem (opcional)

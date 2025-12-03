@@ -1,4 +1,4 @@
-// backend/db/seed.js
+
 const bcrypt = require('bcryptjs');
 const Usuario = require('../models/Usuario');
 const Categoria = require('../models/Categoria');
@@ -7,7 +7,7 @@ const StatusItem = require('../models/StatusItem');
 
 async function seedDatabase() {
   try {
-    // --- Usuário admin ---
+    
     const usuariosCount = await Usuario.count();
     if (usuariosCount === 0) {
       const senhaHash = await bcrypt.hash('123456', 10);
@@ -23,7 +23,7 @@ async function seedDatabase() {
       console.log(' Usuários já existentes. Pulando seed.');
     }
 
-    // --- Categorias ---
+    
     const categoriasCount = await Categoria.count();
     if (categoriasCount === 0) {
       await Categoria.bulkCreate([
@@ -38,7 +38,7 @@ async function seedDatabase() {
       console.log(' Categorias já existentes. Pulando seed.');
     }
 
-    // --- Localizações ---
+    
     const localizacoesCount = await Localizacao.count();
     if (localizacoesCount === 0) {
       await Localizacao.bulkCreate([
@@ -59,7 +59,7 @@ async function seedDatabase() {
       console.log(' Localizações já existentes. Pulando seed.');
     }
 
-    // --- Status ---
+    
     const statusCount = await StatusItem.count();
     if (statusCount === 0) {
       await StatusItem.bulkCreate([

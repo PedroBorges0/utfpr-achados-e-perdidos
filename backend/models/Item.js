@@ -1,4 +1,4 @@
-// backend/models/Item.js
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db/database');
 const Usuario = require('./Usuario');
@@ -21,14 +21,14 @@ const Item = sequelize.define('Item', {
     data_devolucao: { type: DataTypes.DATEONLY },
     imagem: { type: DataTypes.STRING(255) },
     
-    // CORREÇÃO FINAL PARA O TRIGGER SQL: Colunas explícitas
+    
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
     updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: sequelize.literal('CURRENT_TIMESTAMP') },
 }, {
     tableName: 'itens', timestamps: false, freezeTableName: true, primaryKey: 'id_item',
 });
 
-// --- DEFINIÇÃO DAS ASSOCIAÇÕES (Obrigatório para o include) ---
+
 Item.belongsTo(Categoria, { foreignKey: 'id_categoria', as: 'Categoria' });
 Item.belongsTo(Localizacao, { foreignKey: 'id_localizacao_encontrado', as: 'LocalEncontrado' });
 Item.belongsTo(StatusItem, { foreignKey: 'id_status', as: 'StatusAtual' });
