@@ -1,0 +1,76 @@
+# Dependências
+node_modules/
+jspm_packages/
+
+# Builds / distribuições
+dist/
+build/
+out/
+.tmp/
+temp/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Ambiente
+.env
+.env.*.local
+.env.local
+.env.test
+.env.production
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Sistema / OS
+.DS_Store
+Thumbs.db
+
+# Testes
+coverage/
+jest-cache/
+jest-temp/
+test-results.xml
+
+# Cache de ferramentas
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vercel/
+.svelte-kit/
+.snowpack/
+storybook-static/
+
+# Lint / formatação
+.eslintcache
+.prettier-cache
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+docker-compose.override.yml
+docker-data/
+
+# Outros
+*.tgz
+*.zip
+*.tar
+*.gz
+
+# Yarn / npm / pnpm
+.yarn/
+.yarnrc.yml
+.pnpm-store/
+.pnp.*
